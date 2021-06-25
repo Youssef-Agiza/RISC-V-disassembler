@@ -1,0 +1,23 @@
+
+mult1.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000000 <whileLoop-0xc>:
+   0:	01400913          	li	s2,20
+   4:	01e00493          	li	s1,30
+   8:	00000413          	li	s0,0
+
+000000000000000c <whileLoop>:
+   c:	00090863          	beqz	s2,1c <endWhile>
+  10:	00940433          	add	s0,s0,s1
+  14:	fff90913          	addi	s2,s2,-1
+  18:	ff5ff06f          	j	c <whileLoop>
+
+000000000000001c <endWhile>:
+  1c:	00100893          	li	a7,1
+  20:	00040513          	mv	a0,s0
+  24:	00000073          	ecall
+  28:	00a00893          	li	a7,10
+  2c:	00000073          	ecall

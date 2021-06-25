@@ -1,0 +1,18 @@
+
+a.out:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0:	00100013          	li	zero,1
+   4:	00100093          	li	ra,1
+   8:	00100113          	li	sp,1
+   c:	001001b3          	add	gp,zero,ra
+  10:	00208233          	add	tp,ra,sp
+  14:	004182b3          	add	t0,gp,tp
+  18:	00100893          	li	a7,1
+  1c:	00028513          	mv	a0,t0
+  20:	00000073          	ecall
+  24:	00a00893          	li	a7,10
+  28:	00000073          	ecall

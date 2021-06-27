@@ -21,10 +21,11 @@
 	(2) https://github.com/michaeljclark/riscv-meta/blob/master/meta/opcodes
 */
 
-#include <iostream>
 #include <fstream>
-#include "stdlib.h"
+#include <iostream>
 #include <iomanip>
+#include <string>
+#include "stdlib.h"
 
 using namespace std;
 
@@ -32,7 +33,7 @@ unsigned int pc = 0x0;
 
 char memory[8 * 1024]; // only 8KB of memory located at address 0
 
-void emitError(char *s)
+void emitError(std::string s)
 {
 	cout << s;
 	exit(0);
@@ -42,6 +43,15 @@ void printPrefix(unsigned int instA, unsigned int instW)
 {
 	cout << "0x" << hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(8) << instW;
 }
+
+void printItype(unsigned int instW, unsigned int funct3) {}
+void printBType(unsigned int instW, unsigned int funct3) {}
+void printRType(unsigned int instW, unsigned int funct3) {}
+void printSType(unsigned int instW, unsigned int funct3) {}
+
+unsigned int getRd(unsigned int instW) { return (instW >> 7) & 0x0000001F; }
+unsigned int getRs1(unsigned int instW) { return (instW >> 15) & 0x0000001F; }
+unsigned int getRs2(unsigned int instW) { return (instW >> 20) & 0x0000001F; }
 
 void instDecExec(unsigned int instWord)
 {
@@ -63,43 +73,91 @@ void instDecExec(unsigned int instWord)
 			(((instWord >> 25) & 0x3F) << 5) |
 			(((instWord >> 7) & 0x1) << 10) |
 			((instWord >> 31) ? 0xFFFFF800 : 0x0);
+
 	S_imm = (((instWord >> 25) & 0x3F) << 5) | (((instWord >> 7) & 0x1F));
 	U_imm = ((instWord >> 12) & 0xFFFFF);
 
 	printPrefix(instPC, instWord);
 
 	if (opcode == 0x33)
-	{ // R Instructions
+		// R Instructions
 		switch (funct3)
 		{
 		case 0:
 			if (funct7 == 32)
-			{
 				cout << "\tSUB\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			}
 			else
-			{
 				cout << "\tADD\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			}
+			break;
+		case 1:
+			cout << "\tSLL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+			break;
+		case 2:
+			cout << "\tSLT\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+			break;
+		case 3:
+			cout << "\tSLTU\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+			break;
+		case 4:
+			cout << "\tXOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+			break;
+		case 5:
+			if (funct7 == 32)
+				cout << "\tSRA\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+			else
+				cout << "\tSRL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+			break;
+		case 6:
+			cout << "\tOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+			break;
+		case 7:
+			cout << "\tAND\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
 			break;
 		default:
 			cout << "\tUnkown R Instruction \n";
 		}
-	}
+
 	else if (opcode == 0x13)
-	{ // I instructions
+		// I instructions
 		switch (funct3)
 		{
 		case 0:
 			cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
 			break;
+		case 1:
+			cout << "\tSLLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+			break;
+		case 2:
+			cout << "\tSLTI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+			break;
+		case 3:
+			cout << "\tSLTIU\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+			break;
+		case 4:
+			cout << "\tXORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+			break;
+		case 5:
+		{
+			int kkk = (1 << 10);
+			kkk = ((kkk & (int)I_imm) >> 10 == 1) ? 1 : 0;
+			I_imm = (((int)I_imm) & (31));
+			if (kkk)
+				cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+			else
+				cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+		}
+		break;
+		case 6:
+			cout << "\tORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+			break;
+		case 7:
+			cout << "\tANDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+			break;
 		default:
 			cout << "\tUnkown I Instruction \n";
 		}
-	}
 	else if (opcode == 0x63)
-	{ //B-Type
-
+		//B-Type
 		switch (funct3)
 		{
 		case 0:
@@ -128,39 +186,33 @@ void instDecExec(unsigned int instWord)
 		default:
 			std::cout << "\tUnkown B Instruction \n";
 		}
-	}
+
 	else if (opcode == 0x23)
-	{ // S instructions
+		// S instructions
 		switch (funct3)
 		{
 		case 0:
-			cout << "\tSB\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")"
-				 << "\n";
+			cout << "\tSB\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")\n";
 			break;
 		case 1:
-			cout << "\tSH\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")"
-				 << "\n";
+			cout << "\tSH\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")\n";
 			break;
 		case 2:
-			cout << "\tSW\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")"
-				 << "\n";
+			cout << "\tSW\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")\n";
 			break;
 		default:
 			cout << "\tUnkown S Instruction \n";
 		}
-	}
+
 	else if (opcode == 0x37)
-	{ // LUI instructions
+		// LUI instructions
 		cout << "\tLUI\tx" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
-	}
+
 	else if (opcode == 0x17)
-	{ // AUIPC instructions
+		// AUIPC instructions
 		cout << "\tAUIPC\tx" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
-	}
 	else
-	{
 		cout << "\tUnkown Instruction \n";
-	}
 }
 
 int main(int argc, char *argv[])

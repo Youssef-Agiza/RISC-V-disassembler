@@ -59,6 +59,12 @@ void instDecExec(unsigned int instWord)
 
 	// — inst[31] — inst[30:25] inst[24:21] inst[20]
 	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
+	B_imm = (((instWord >> 8) & 0xF) << 1) |
+			(((instWord >> 25) & 0x3F) << 5) |
+			(((instWord >> 7) & 0x1) << 10) |
+			((instWord >> 31) ? 0xFFFFF800 : 0x0);
+	S_imm = (((instWord >> 25) & 0x3F) << 5) | (((instWord >> 7) & 0x1F));
+	U_imm = ((instWord >> 12) & 0xFFFFF);
 
 	printPrefix(instPC, instWord);
 
@@ -90,6 +96,66 @@ void instDecExec(unsigned int instWord)
 		default:
 			cout << "\tUnkown I Instruction \n";
 		}
+	}
+	else if (opcode == 0x63)
+	{ //B-Type
+
+		switch (funct3)
+		{
+		case 0:
+			std::cout << "\tBEQ\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+			break; //BEQ
+		case 1:
+			std::cout << "\tBNE\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+
+			break; //BNE
+		case 4:
+			std::cout << "\tBLT\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+
+			break; //BLT
+		case 5:
+			std::cout << "\tBGT\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+
+			break; //BGE
+		case 6:
+			std::cout << "\tBLTU\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+
+			break; //BLTU
+		case 7:
+			std::cout << "\tBGTU\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+
+			break; //BGEU
+		default:
+			std::cout << "\tUnkown B Instruction \n";
+		}
+	}
+	else if (opcode == 0x23)
+	{ // S instructions
+		switch (funct3)
+		{
+		case 0:
+			cout << "\tSB\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")"
+				 << "\n";
+			break;
+		case 1:
+			cout << "\tSH\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")"
+				 << "\n";
+			break;
+		case 2:
+			cout << "\tSW\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")"
+				 << "\n";
+			break;
+		default:
+			cout << "\tUnkown S Instruction \n";
+		}
+	}
+	else if (opcode == 0x37)
+	{ // LUI instructions
+		cout << "\tLUI\tx" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
+	}
+	else if (opcode == 0x17)
+	{ // AUIPC instructions
+		cout << "\tAUIPC\tx" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
 	}
 	else
 	{

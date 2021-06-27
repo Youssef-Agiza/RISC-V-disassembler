@@ -26,6 +26,7 @@
 #include <iomanip>
 #include <string>
 #include "stdlib.h"
+#include "./instructionsMap.h"
 
 using namespace std;
 
@@ -33,7 +34,7 @@ unsigned int pc = 0x0;
 
 char memory[8 * 1024]; // only 8KB of memory located at address 0
 
-void emitError(std::string s)
+void emitError(const char *s)
 {
 	cout << s;
 	exit(0);
@@ -44,175 +45,147 @@ void printPrefix(unsigned int instA, unsigned int instW)
 	cout << "0x" << hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(8) << instW;
 }
 
-void printItype(unsigned int instW, unsigned int funct3) {}
-void printBType(unsigned int instW, unsigned int funct3) {}
-void printRType(unsigned int instW, unsigned int funct3) {}
-void printSType(unsigned int instW, unsigned int funct3) {}
+//for debugging
+void printInfo(unsigned int opcode, unsigned int funct3, unsigned int funct7, unsigned int instWord)
+{
+	std::cout << std::ios::binary << "\n funct3: " << funct3
+			  << "\n instruction word: " << (instWord >> 7)
+			  << "\n funct7: " << funct7
+			  << "\n opcode: " << opcode << "\n";
+}
 
-unsigned int getRd(unsigned int instW) { return (instW >> 7) & 0x0000001F; }
-unsigned int getRs1(unsigned int instW) { return (instW >> 15) & 0x0000001F; }
-unsigned int getRs2(unsigned int instW) { return (instW >> 20) & 0x0000001F; }
+void getImmediates(unsigned int instW,
+				   unsigned int &I_imm,
+				   unsigned int &S_imm,
+				   unsigned int &B_imm,
+				   unsigned int &U_imm,
+				   unsigned int &J_imm)
+{
+
+	// — inst[31] — inst[30:25] inst[24:21] inst[20]
+	I_imm = ((instW >> 20) & 0x7FF) | (((instW >> 31) ? 0xFFFFF800 : 0x0));
+
+	// — inst[31] — inst[7] inst[30:25] inst[11:8]
+	B_imm = (((instW >> 8) & 0xF) << 1) |
+			(((instW >> 25) & 0x3F) << 5) |
+			(((instW >> 7) & 0x1) << 10) |
+			((instW >> 31) ? 0xFFFFF800 : 0x0);
+
+	S_imm = (((instW >> 25) & 0x3F) << 5) | (((instW >> 7) & 0x1F));
+	U_imm = ((instW >> 12) & 0xFFFFF);
+}
+
+void getFuncts(unsigned int instW, unsigned int &funct3, unsigned int &funct7)
+{
+	funct3 = (instW >> 12) & 0x00000007; // & with the following 3 bits
+	funct7 = (instW >> 25) & 0x0000007F; // the last 7 bits
+}
+
+bool validateFunct3(unsigned int opcode, unsigned int funct3)
+{
+	if (funct3 > 7)
+	{
+		if (opcode == 0x33) //R type
+			cout << "\tUnkown R Instruction \n";
+		if (opcode == 0x13) //I type
+			cout << "\tUnkown I Instruction \n";
+
+		return false;
+	}
+	if (opcode == 0x63 && (funct3 == 2 || funct3 == 3 || funct3 > 7)) //B type
+	{
+		cout << "\tUnkown B Instruction \n";
+		return false;
+	}
+	if (opcode == 0x23 && funct3 > 2)
+	{
+		cout << "\tUnkown S Instruction \n";
+		return false;
+	}
+	return true;
+}
+
+std::string getRegABI(unsigned int reg)
+{
+	if (reg > 31)
+	{
+		std::cout << "invalid register number";
+		return "";
+	}
+
+	std::string initial_ABIs[] = {"zero", "ra", "sp", "gp", "tp"};
+	if (reg < 5)
+		return initial_ABIs[reg];
+
+	if ((reg > 4 && reg < 8)) //temporaries
+		return "t" + to_string(reg - 5);
+	if (reg > 27) //temporaries
+		return "t" + to_string(reg - 25);
+
+	if (reg > 9 && reg < 18) //a0-1
+		return "a" + to_string(reg - 10);
+
+	if (reg == 8 || reg == 9) //s0 & s1
+		return "s" + to_string(reg - 8);
+
+	return "s" + to_string(reg - 16); //s2-11
+}
+
+void getRegs(unsigned int instW, std::string &rd, std::string &rs1, std::string &rs2)
+{
+	unsigned int rd_num, rs1_num, rs2_num;
+	rd_num = (instW >> 7) & 0x0000001F;	  // & with the following 5 bits
+	rs1_num = (instW >> 15) & 0x0000001F; // the following 5 bits
+	rs2_num = (instW >> 20) & 0x0000001F;
+
+	rd = getRegABI(rd_num);
+	rs1 = getRegABI(rs1_num);
+	rs2 = getRegABI(rs2_num);
+}
 
 void instDecExec(unsigned int instWord)
 {
-	unsigned int rd, rs1, rs2, funct3, funct7, opcode;
+	unsigned int funct3, funct7, opcode;
 	unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
+
+	std::string rd, rs1, rs2;
+
 	unsigned int address;
 
 	unsigned int instPC = pc - 4;
 
-	opcode = instWord & 0x0000007F;			//& with first 7 bits
-	rd = (instWord >> 7) & 0x0000001F;		// & with the following 5 bits
-	funct3 = (instWord >> 12) & 0x00000007; // & with the following 3 bits
-	rs1 = (instWord >> 15) & 0x0000001F;	// the following 5 bits
-	rs2 = (instWord >> 20) & 0x0000001F;	// the last 5 bits
-
-	// — inst[31] — inst[30:25] inst[24:21] inst[20]
-	I_imm = ((instWord >> 20) & 0x7FF) | (((instWord >> 31) ? 0xFFFFF800 : 0x0));
-	B_imm = (((instWord >> 8) & 0xF) << 1) |
-			(((instWord >> 25) & 0x3F) << 5) |
-			(((instWord >> 7) & 0x1) << 10) |
-			((instWord >> 31) ? 0xFFFFF800 : 0x0);
-
-	S_imm = (((instWord >> 25) & 0x3F) << 5) | (((instWord >> 7) & 0x1F));
-	U_imm = ((instWord >> 12) & 0xFFFFF);
+	/*parsing instWord*/
+	opcode = instWord & 0x0000007F; //& with first 7 bits
+	getFuncts(instWord, funct3, funct7);
+	getRegs(instWord, rd, rs1, rs2);
+	getImmediates(instWord, I_imm, S_imm, B_imm, U_imm, J_imm);
 
 	printPrefix(instPC, instWord);
 
-	if (opcode == 0x33)
-		// R Instructions
-		switch (funct3)
-		{
-		case 0:
-			if (funct7 == 32)
-				cout << "\tSUB\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			else
-				cout << "\tADD\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		case 1:
-			cout << "\tSLL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		case 2:
-			cout << "\tSLT\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		case 3:
-			cout << "\tSLTU\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		case 4:
-			cout << "\tXOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		case 5:
-			if (funct7 == 32)
-				cout << "\tSRA\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			else
-				cout << "\tSRL\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		case 6:
-			cout << "\tOR\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		case 7:
-			cout << "\tAND\tx" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-			break;
-		default:
-			cout << "\tUnkown R Instruction \n";
-		}
-
-	else if (opcode == 0x13)
-		// I instructions
-		switch (funct3)
-		{
-		case 0:
-			cout << "\tADDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			break;
-		case 1:
-			cout << "\tSLLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			break;
-		case 2:
-			cout << "\tSLTI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			break;
-		case 3:
-			cout << "\tSLTIU\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			break;
-		case 4:
-			cout << "\tXORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			break;
-		case 5:
-		{
-			int kkk = (1 << 10);
-			kkk = ((kkk & (int)I_imm) >> 10 == 1) ? 1 : 0;
-			I_imm = (((int)I_imm) & (31));
-			if (kkk)
-				cout << "\tSRAI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			else
-				cout << "\tSRLI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-		}
+	switch (opcode)
+	{
+	case 0x33: // R Instructions
+		cout << "\t" << R_instructions[(funct3 | funct7)] << "\t" << rd << ", " << rs1 << ", " << rs2 << "\n";
 		break;
-		case 6:
-			cout << "\tORI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			break;
-		case 7:
-			cout << "\tANDI\tx" << rd << ", x" << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
-			break;
-		default:
-			cout << "\tUnkown I Instruction \n";
-		}
-	else if (opcode == 0x63)
-		//B-Type
-		switch (funct3)
-		{
-		case 0:
-			std::cout << "\tBEQ\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
-			break; //BEQ
-		case 1:
-			std::cout << "\tBNE\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
-
-			break; //BNE
-		case 4:
-			std::cout << "\tBLT\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
-
-			break; //BLT
-		case 5:
-			std::cout << "\tBGT\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
-
-			break; //BGE
-		case 6:
-			std::cout << "\tBLTU\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
-
-			break; //BLTU
-		case 7:
-			std::cout << "\tBGTU\tx" << rs1 << ", x" << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
-
-			break; //BGEU
-		default:
-			std::cout << "\tUnkown B Instruction \n";
-		}
-
-	else if (opcode == 0x23)
-		// S instructions
-		switch (funct3)
-		{
-		case 0:
-			cout << "\tSB\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")\n";
-			break;
-		case 1:
-			cout << "\tSH\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")\n";
-			break;
-		case 2:
-			cout << "\tSW\tx" << rs2 << ", " << S_imm << "(x" << rs1 << ")\n";
-			break;
-		default:
-			cout << "\tUnkown S Instruction \n";
-		}
-
-	else if (opcode == 0x37)
-		// LUI instructions
-		cout << "\tLUI\tx" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
-
-	else if (opcode == 0x17)
-		// AUIPC instructions
-		cout << "\tAUIPC\tx" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
-	else
+	case 0x13:
+		cout << "\t" << I_instructions[(funct3 | funct7)] << "\t" << rd << ", " << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+		break;
+	case 0x63: //B-Type
+		std::cout << "\t" << B_instructions[funct3] << "\t" << rs1 << ", " << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+		break;
+	case 0x23: // S instructions
+		cout << "\t" << S_instructions[funct3] << "\t" << rs2 << ", " << S_imm << "(" << rs1 << ")\n";
+		break;
+	case 0x37: // LUI instructions
+		cout << "\tLUI\t" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
+		break;
+	case 0x17: // AUIPC instructions
+		cout << "\tAUIPC\t" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
+	default:
 		cout << "\tUnkown Instruction \n";
+		break;
+	}
+	// printInfo(opcode, funct3, funct7, instWord);
 }
 
 int main(int argc, char *argv[])
@@ -243,7 +216,7 @@ int main(int argc, char *argv[])
 					   (((unsigned char)memory[pc + 3]) << 24);
 			pc += 4;
 			// remove the following line once you have a complete simulator
-			if (pc == 40)
+			if (pc == 48)
 				break; // stop when PC reached address 32
 			instDecExec(instWord);
 		}

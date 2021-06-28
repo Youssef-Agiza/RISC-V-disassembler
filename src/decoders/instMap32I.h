@@ -1,7 +1,13 @@
 #pragma once
+#ifndef instMap32I_H
+#define instMap32I_H
 
 #include <map>
 #include <string>
+
+//maps for RV32I instructions to get the instructions directly using funct3 and funct7
+
+//key--> (funct3|funct7). value-->instruction name
 typedef std::map<int, std::string> instruction_map;
 
 instruction_map R_instructions = {{0, "ADD"},
@@ -35,3 +41,11 @@ instruction_map B_instructions = {{0, "BEQ"},
 instruction_map S_instructions = {{0, "SB"},
                                   {1, "SH"},
                                   {2, "SW"}};
+
+instruction_map load_instructions = {{0, "LB"},
+                                     {1, "LH"},
+                                     {2, "LW"},
+                                     {4, "LBU"},
+                                     {5, "LHU"}};
+
+#endif //instMap32I_H

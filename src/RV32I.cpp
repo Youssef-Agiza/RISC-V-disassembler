@@ -2,6 +2,7 @@
 
 RV32I::RV32I()
 {
+    instSize = 4;
 }
 RV32I::~RV32I() {}
 
@@ -79,7 +80,7 @@ std::string RV32I::getABIName(unsigned int reg)
     if (reg > 27) //temporaries
         return "t" + std::to_string(reg - 25);
 
-    if (reg > 9 && reg < 18) //a0-1
+    if (reg > 9 && reg < 18) //a0-7
         return "a" + std::to_string(reg - 10);
 
     if (reg == 8 || reg == 9) //s0 & s1
@@ -108,7 +109,9 @@ void RV32I::printInstruction()
         std::cout << "\t" << R_instructions[(funct3 | funct7)] << "\t" << rd << ", " << rs1 << ", " << rs2 << "\n";
         break;
     case I_TYPE:
-        std::cout << "\t" << I_instructions[(funct3 | funct7)] << "\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "\n";
+        if (funct3 == 5)
+            funct3 = (funct3 | funct7);
+        std::cout << "\t" << I_instructions[funct3] << "\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "\n";
         break;
     case B_TYPE: //B-Type
         std::cout << "\t" << B_instructions[funct3] << "\t" << rs1 << ", " << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";

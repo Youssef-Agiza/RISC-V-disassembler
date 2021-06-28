@@ -1,6 +1,6 @@
 #pragma once
-#ifndef RVDECODER_H
-#define RVDECODER_H
+#ifndef RV_DECODER_H
+#define RV_DECODER_H
 #include <iostream>
 #include <iomanip>
 #include <string>

@@ -72,7 +72,13 @@ void getImmediates(unsigned int instW,
 			((instW >> 31) ? 0xFFFFF800 : 0x0);
 
 	S_imm = (((instW >> 25) & 0x3F) << 5) | (((instW >> 7) & 0x1F));
+
 	U_imm = ((instW >> 12) & 0xFFFFF);
+
+	J_imm = (((instW >> 21) & 0x3FF) << 1) | //inst[30:25]  inst[25:21] 0
+			(((instW >> 20) & 0x1) << 11) |	 //inst[20]
+			(((instW >> 12) & 0xFF) << 12) | //inst [19:12]
+			(((instW >> 31) ? 0xFFF : 0x0)); //— inst[31] —
 }
 
 void getFuncts(unsigned int instW, unsigned int &funct3, unsigned int &funct7)
@@ -145,13 +151,11 @@ void getRegs(unsigned int instW, std::string &rd, std::string &rs1, std::string 
 
 void instDecExec(unsigned int instWord)
 {
+	std::string rd, rs1, rs2;
 	unsigned int funct3, funct7, opcode;
 	unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
 
-	std::string rd, rs1, rs2;
-
 	unsigned int address;
-
 	unsigned int instPC = pc - 4;
 
 	/*parsing instWord*/
@@ -162,25 +166,44 @@ void instDecExec(unsigned int instWord)
 
 	printPrefix(instPC, instWord);
 
+	if (!validateFunct3(opcode, funct3))
+		return;
+
 	switch (opcode)
 	{
-	case 0x33: // R Instructions
+	case R_TYPE: // R Instructions
 		cout << "\t" << R_instructions[(funct3 | funct7)] << "\t" << rd << ", " << rs1 << ", " << rs2 << "\n";
 		break;
-	case 0x13:
+	case I_TYPE:
 		cout << "\t" << I_instructions[(funct3 | funct7)] << "\t" << rd << ", " << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
 		break;
-	case 0x63: //B-Type
-		std::cout << "\t" << B_instructions[funct3] << "\t" << rs1 << ", " << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+	case B_TYPE: //B-Type
+		cout << "\t" << B_instructions[funct3] << "\t" << rs1 << ", " << rs2 << ", " << hex << "0x" << (int)B_imm << "\n";
 		break;
-	case 0x23: // S instructions
+	case S_TYPE:
 		cout << "\t" << S_instructions[funct3] << "\t" << rs2 << ", " << S_imm << "(" << rs1 << ")\n";
 		break;
-	case 0x37: // LUI instructions
+	case LUI:
 		cout << "\tLUI\t" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
 		break;
-	case 0x17: // AUIPC instructions
+	case AUIPC:
 		cout << "\tAUIPC\t" << rd << ", " << hex << "0x" << (int)U_imm << "\n";
+		break;
+	case JAL:
+		cout << "\tJAL\t" << rd << ", " << hex << "0x" << (int)J_imm << "\n";
+		break;
+	case JALR:
+		cout << "\tJALR\t" << rd << ", " << rs1 << ", " << hex << "0x" << (int)I_imm << "\n";
+		break;
+	case SYS_CALL:
+		if (!I_imm) //if last 12 bits == 0
+			cout << "\tECALL\n";
+		else
+			cout << "\tEBREAK\n";
+		break;
+	case LOAD: //Load instructions (I-type) with different opcode
+		cout << "\t" << load_instructions[funct3] << "\t" << rd << ", " << rs1 << "0x" << (int)I_imm << "\n";
+
 	default:
 		cout << "\tUnkown Instruction \n";
 		break;
@@ -203,7 +226,6 @@ int main(int argc, char *argv[])
 	if (inFile.is_open())
 	{
 		int fsize = inFile.tellg();
-
 		inFile.seekg(0, inFile.beg);
 		if (!inFile.read((char *)memory, fsize))
 			emitError("Cannot read from input file\n");
@@ -216,7 +238,7 @@ int main(int argc, char *argv[])
 					   (((unsigned char)memory[pc + 3]) << 24);
 			pc += 4;
 			// remove the following line once you have a complete simulator
-			if (pc == 48)
+			if (pc > 0x40)
 				break; // stop when PC reached address 32
 			instDecExec(instWord);
 		}

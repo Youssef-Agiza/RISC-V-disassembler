@@ -1,8 +1,10 @@
 #pragma once
 #ifndef RV32I_H
 #define RV32I_H
-#include "RVDecoder.h"
-#include "./instMap32I.h"
+#include "../headers/RVDecoder.h"
+#include "../headers/instMap32I.h"
+#include <string>
+
 //better readability
 enum OP_CODES
 {
@@ -21,19 +23,22 @@ enum OP_CODES
 class RV32I : public RVDecoder
 {
 private:
-    virtual void getImmediates(unsigned int instW) override;
+    virtual void extractImmediates(unsigned int instW) override;
 
-    virtual void getFuncts(unsigned int instW) override;
+    virtual void extractFuncts(unsigned int instW) override;
 
     virtual bool validateFunct3() override;
 
     virtual std::string getABIName(unsigned int reg) override;
 
-    virtual void getRegs(unsigned int instW) override;
+    virtual void extractRegs(unsigned int instW) override;
+    virtual void printPrefix(unsigned int instA, unsigned int instW) override;
+
+    virtual void printInstruction() override;
 
 public:
     RV32I();
-    virtual ~RV32I() {}
+    virtual ~RV32I();
 
     virtual void decodeWord(unsigned int instW, unsigned int pc) override;
 };

@@ -24,9 +24,9 @@ void Disassembler::readFile(char *file_name)
     if (!inFile.is_open())
         emitError("Cannot access input file\n");
 
-    int fsize = inFile.tellg();
+    fsize_ = inFile.tellg();
     inFile.seekg(0, inFile.beg);
-    if (!inFile.read((char *)memory_, fsize))
+    if (!inFile.read((char *)memory_, fsize_))
         emitError("Cannot read from input file\n");
 }
 
@@ -45,7 +45,7 @@ void Disassembler::disassemble(char *file_name)
                    (((unsigned char)memory_[pc_ + 3]) << 24);
         pc_ += 4;
         // remove the following line once you have a complete simulator
-        if (pc_ == 80)
+        if (pc_ == fsize_)
             break; // stop when PC reached address 32
         decoder_->decodeWord(instWord, pc_);
     }

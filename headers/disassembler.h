@@ -14,6 +14,7 @@ private:
     RVDecoder *decoder_;
     unsigned int pc_;
     char *memory_;
+    unsigned int fsize_;
 
     void emitError(const char *message) const;
 

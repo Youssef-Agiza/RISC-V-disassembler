@@ -7,12 +7,11 @@
 
 /*
 Abstract class interface. Responsible for decoding instruction word.
-This class will be 
 */
 class RVDecoder
 {
 protected:
-    unsigned int opcode, funct3, funct7;
+    unsigned int opcode, funct3;
 
     /*immediates*/
     unsigned int I_imm, B_imm, J_imm, U_imm, S_imm;
@@ -32,6 +31,8 @@ protected: //virtual functions
     //output: funct3 and funct7 values are set
     virtual void extractFuncts(unsigned int instW) = 0;
 
+    virtual bool validateFuncts() = 0;
+
     //input: instruction word
     //output: rd, rs1, and rs2 values are set
     virtual void extractRegs(unsigned int instW) = 0;
@@ -39,10 +40,6 @@ protected: //virtual functions
     //input: reg number
     //output: ABI name
     virtual std::string getABIName(unsigned int reg) = 0;
-
-    /* if funct3 is valid relative to opcode returns false
-     ...and prints unknown function message. else, returns true*/
-    virtual bool validateFunct3() = 0;
 
     //prints instructionPC and instruction word.
     virtual void printPrefix(unsigned int instPC, unsigned int instW) = 0;

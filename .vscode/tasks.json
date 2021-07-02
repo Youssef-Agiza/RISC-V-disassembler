@@ -3,15 +3,15 @@
   "tasks": [
     {
       "type": "cppbuild",
-      "label": "C/C++: g++ build project",
+      "label": "C/C++: g++ Build disassembler",
       "command": "/usr/bin/g++",
       "args": [
         "-g",
-        "${file}",
+        "${workspaceFolder}\\**.cpp",
         "-I",
-        "${fileDirname}",
+        "${workspaceFolder}/headers",
         "-o",
-        "${fileDirname}/${fileBasenameNoExtension}"
+        "${workspaceFolder}/myDiss"
       ],
       "options": {
         "cwd": "${fileDirname}"
@@ -22,13 +22,6 @@
         "isDefault": true
       },
       "detail": "compiler: /usr/bin/g++"
-    },
-    {
-      "type": "shell",
-      "label": "echo dirname",
-      "command": "/usr/bin/echo",
-      "args": ["HERE:  ", "${fileDirname}"],
-      "problemMatcher": []
     }
   ]
 }

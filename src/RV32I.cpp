@@ -1,4 +1,5 @@
 #include "RV32I.h"
+#include "../headers/instMap32I.h"
 
 RV32I::RV32I()
 {
@@ -38,7 +39,7 @@ void RV32I::extractFuncts(unsigned int instW)
     funct7 = (instW >> 25) & 0x0000007F;
 }
 
-bool RV32I::validateFunct3()
+bool RV32I::validateFuncts()
 {
 
     if (funct3 > 7)
@@ -103,6 +104,7 @@ void RV32I::extractRegs(unsigned int instW)
 
 void RV32I::printInstruction()
 {
+
     switch (opcode)
     {
     case R_TYPE: // R Instructions
@@ -138,8 +140,8 @@ void RV32I::printInstruction()
             std::cout << "\tEBREAK\n";
         break;
     case LOAD: //Load instructions (I-type) with different opcode
-        std::cout << "\t" << load_instructions[funct3] << "\t" << rd << ", " << rs1 << "0x" << (int)I_imm << "\n";
-
+        std::cout << "\t" << load_instructions[funct3] << "\t" << rd << ", 0x" << std::hex << (int)I_imm << "(" << rs1 << ")\n";
+        break;
     default:
         std::cout << "\tUnkown Instruction \n";
         break;
@@ -158,7 +160,7 @@ void RV32I::decodeWord(unsigned int instW, unsigned int pc)
 
     printPrefix(instPC, instW);
 
-    if (!validateFunct3())
+    if (!validateFuncts())
         return;
 
     printInstruction();

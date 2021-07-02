@@ -4,6 +4,9 @@
 
 #include <map>
 #include <string>
+#include <iostream>
+#include <iomanip>
+#include <string>
 
 //maps for RV32I instructions to get the instructions directly using funct3 and funct7
 

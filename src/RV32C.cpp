@@ -3,10 +3,12 @@
 
 void RV32C::extractImmediates(unsigned int instW)
 {
-    if (opcode == 0)
-        imm = (((instW >> 5) & 0x1) << 2) |
-              (((instW >> 10) & 0x7) << 3) |
-              (((instW >> 6) & 0x1) << 6);
+    if (opcode == 0) //SW & LW
+        //inst[6] inst[12:10] inst[2] 0 0
+        imm = ((((instW >> 5) & 0x1) << 2) |
+               (((instW >> 10) & 0x7) << 3) |
+               (((instW >> 6) & 0x1) << 6))
+              << 2;
 
     else if (opcode == 1 && funct3 == 1) //C.JAL
     {
@@ -20,12 +22,38 @@ void RV32C::extractImmediates(unsigned int instW)
                (((instW >> 6) & 0x1 << 7)) |   //imm[7]
                (((instW >> 3) & 0x7) << 1) |   //imm[3:1]
                (((instW >> 2) & 0x1) << 5))    //imm[5]
-              << 1;                            //shft left by 1 to put 0 in as the first bit
+              << 1;                            //scale by 2
     }
-    else
+    else // ((opcode == 1 && funct != 1) || opcode == 2)
         imm = (((instW >> 12) & 0x1) << 5) | ((instW >> 2) & 0xF);
 }
-bool RV32C::validateFuncts() { return true; }
+bool RV32C::validateFuncts()
+{
+
+    /*
+SW
+LW
+
+
+ADDI
+JAL
+LUI
+SRLI
+SRAI
+ANDI
+AND
+OR
+XOR
+SUB
+
+
+SLLI
+ADD
+EBREAK
+JALR
+*/
+    return true;
+}
 
 void RV32C::extractFuncts(unsigned int instW)
 {
@@ -53,7 +81,7 @@ void RV32C::printPrefix(unsigned int instA, unsigned int instW)
     unsigned int instHW = instW >> 4;
     std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(4) << instHW;
 }
-void RV32C::printInstruction()
+void RV32C::printInstruction(int pc)
 {
     if (opcode == 0)
     {

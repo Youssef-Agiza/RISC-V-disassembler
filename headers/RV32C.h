@@ -19,7 +19,7 @@ private:
     virtual void extractRegs(unsigned int instW) override;
     virtual void printPrefix(unsigned int instA, unsigned int instW) override;
 
-    virtual void printInstruction() override;
+    virtual void printInstruction(int pc) override;
 
 public:
     RV32C();

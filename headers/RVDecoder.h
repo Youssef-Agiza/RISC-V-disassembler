@@ -1,9 +1,7 @@
 #pragma once
 #ifndef RV_DECODER_H
 #define RV_DECODER_H
-#include <iostream>
-#include <iomanip>
-#include <string>
+#include "common.h"
 
 /*
 Abstract class interface. Responsible for decoding instruction word.
@@ -21,6 +19,10 @@ protected:
 
     //instruction size. overridden in children classes to change pc
     unsigned int instSize;
+
+    /*jump addresses are mapped to their label and stored here*/
+    std::map<int, std::string> labels_map;
+    unsigned int label_counter;
 
 protected: //virtual functions
     //input: instruction word
@@ -45,10 +47,12 @@ protected: //virtual functions
     virtual void printPrefix(unsigned int instPC, unsigned int instW) = 0;
 
     //print instruction after opcode and functions are set.
-    virtual void printInstruction() = 0;
+    virtual void printInstruction(int pc) = 0;
+
+    virtual void generateLabel(int address) { labels_map[address] = "L" + std::to_string(label_counter++); }
 
 public:
-    RVDecoder(){};
+    RVDecoder() : label_counter(1){};
     virtual ~RVDecoder() {}
 
     virtual void decodeWord(unsigned int instW, unsigned int pc) = 0;

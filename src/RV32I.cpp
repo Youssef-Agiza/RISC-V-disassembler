@@ -102,7 +102,7 @@ void RV32I::extractRegs(unsigned int instW)
     rs2 = getABIName(rs2_num);
 }
 
-void RV32I::printInstruction()
+void RV32I::printInstruction(int pc)
 {
 
     switch (opcode)
@@ -128,10 +128,14 @@ void RV32I::printInstruction()
         std::cout << "\tAUIPC\t" << rd << ", " << std::hex << "0x" << (int)U_imm << "\n";
         break;
     case JAL:
-        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "\n";
+        generateLabel(J_imm + pc);
+        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << labels_map[J_imm + pc] << ">"
+                  << "\n";
         break;
     case JALR:
-        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "\n";
+        generateLabel(I_imm + pc);
+        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << labels_map[I_imm + pc] << ">"
+                  << "\n";
         break;
     case SYS_CALL:
         if (!I_imm) //if last 12 bits == 0
@@ -163,6 +167,6 @@ void RV32I::decodeWord(unsigned int instW, unsigned int pc)
     if (!validateFuncts())
         return;
 
-    printInstruction();
+    printInstruction(pc);
     // printInfo(opcode, funct3, funct7, instW);
 }

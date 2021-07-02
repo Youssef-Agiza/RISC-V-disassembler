@@ -16,7 +16,7 @@ private:
     char *memory_;
     unsigned int fsize_;
 
-    void emitError(const char *message) const;
+    static void emitError(const char *message);
 
 public:
     Disassembler();

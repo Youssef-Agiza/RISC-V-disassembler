@@ -1,14 +1,12 @@
 #include "../headers/disassembler.h"
 
-void Disassembler::emitError(const char *message) const
+void Disassembler::emitError(const char *message) //static
 {
     std::cout << message;
     exit(1);
 }
 
-Disassembler::Disassembler() : decoder_(nullptr), pc_(0x0), memory_(new char[8 * 1024]) // only 8KB of memory located at address 0
-{
-}
+Disassembler::Disassembler() : decoder_(nullptr), pc_(0x0), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
 
 Disassembler::~Disassembler()
 {
@@ -43,10 +41,9 @@ void Disassembler::disassemble(char *file_name)
                    (((unsigned char)memory_[pc_ + 1]) << 8) |
                    (((unsigned char)memory_[pc_ + 2]) << 16) |
                    (((unsigned char)memory_[pc_ + 3]) << 24);
-        pc_ += 4;
-        // remove the following line once you have a complete simulator
-        if (pc_ == fsize_)
-            break; // stop when PC reached address 32
+        pc_ += decoder_->getInstSize();
+        if (pc_ >= fsize_ + 4)
+            break;
         decoder_->decodeWord(instWord, pc_);
     }
 }

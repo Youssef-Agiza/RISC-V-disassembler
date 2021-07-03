@@ -65,16 +65,18 @@ void RV32C::extractFuncts(unsigned int instW)
 
 void RV32C::extractRegs(unsigned int instW)
 {
-    unsigned int rs1, rs2;
+    unsigned int rs1_num, rs2_num;
 
-    rs2 = (instW >> 2) & 0x7;
-    rs1 = (instW >> 7) & 0x7;
+    rs2_num = (instW >> 2) & 0x7;
+    rs1_num = (instW >> 7) & 0x7;
 
     if (opcode == 0x2) //append two more bits to the left
     {
-        rs2 = (rs2) | (((instW >> 5) & 0x3) << 3);
-        rs1 = (rs1) | (((instW >> 10) & 0x3) << 3);
+        rs2_num = (rs2_num) | (((instW >> 5) & 0x3) << 3);
+        rs1_num = (rs1_num) | (((instW >> 10) & 0x3) << 3);
     }
+    rs1 = getABIName(rs1_num);
+    rs2 = getABIName(rs2_num);
 }
 void RV32C::printPrefix(unsigned int instA, unsigned int instW)
 {

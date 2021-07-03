@@ -49,7 +49,11 @@ protected: //virtual functions
     //print instruction after opcode and functions are set.
     virtual void printInstruction(int pc) = 0;
 
-    virtual void generateLabel(int address) { labels_map[address] = "L" + std::to_string(label_counter++); }
+    virtual void generateLabel(int address)
+    {
+        if (labels_map.find(address) == labels_map.end())
+            labels_map[address] = "L" + std::to_string(label_counter++);
+    }
 
 public:
     RVDecoder() : label_counter(1){};

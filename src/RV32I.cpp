@@ -27,10 +27,10 @@ void RV32I::extractImmediates(unsigned int instW)
 
     U_imm = ((instW >> 12) & 0xFFFFF);
 
-    J_imm = (((instW >> 21) & 0x3FF) << 1) | //inst[30:25]  inst[25:21] 0
-            (((instW >> 20) & 0x1) << 11) |  //inst[20]
-            (((instW >> 12) & 0xFF) << 12) | //inst [19:12]
-            (((instW >> 31) ? 0xFFF : 0x0)); //— inst[31] —
+    J_imm = (((instW >> 21) & 0x3FF) << 1) |      //inst[30:25]  inst[25:21] 0
+            (((instW >> 20) & 0x1) << 11) |       //inst[20]
+            (((instW >> 12) & 0xFF) << 12) |      //inst [19:12]
+            (((instW >> 31) ? 0xFFF00000 : 0x0)); //— inst[31] —
 }
 
 void RV32I::extractFuncts(unsigned int instW)
@@ -102,9 +102,17 @@ void RV32I::extractRegs(unsigned int instW)
     rs2 = getABIName(rs2_num);
 }
 
+//input: offset of jump and pc
+//output: address the pc should jump to
+int getJumpAdress(unsigned int offset, int pc)
+{
+    //handles the case where address is negative
+    return (offset >> 31) ? pc - ((offset ^ 0xFFFFFFFF) + 1) : pc + offset;
+}
+
 void RV32I::printInstruction(int pc)
 {
-
+    int address; //used for Jump label
     switch (opcode)
     {
     case R_TYPE: // R Instructions
@@ -128,14 +136,14 @@ void RV32I::printInstruction(int pc)
         std::cout << "\tAUIPC\t" << rd << ", " << std::hex << "0x" << (int)U_imm << "\n";
         break;
     case JAL:
-        generateLabel(J_imm + pc);
-        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << labels_map[J_imm + pc] << ">"
-                  << "\n";
+        address = getJumpAdress(J_imm, pc);
+        generateLabel(address);
+        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << labels_map[address] << ">\n";
         break;
     case JALR:
-        generateLabel(I_imm + pc);
-        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << labels_map[I_imm + pc] << ">"
-                  << "\n";
+        address = getJumpAdress(I_imm, pc);
+        generateLabel(address);
+        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << labels_map[address] << ">\n";
         break;
     case SYS_CALL:
         if (!I_imm) //if last 12 bits == 0

@@ -4,9 +4,10 @@
 
 #include "common.h"
 
-instruction_map CA_instructions = {{3, "AND"},
-                                   {2, "OR"},
-                                   {1, "XOR"},
-                                   {0, "SUB"}};
+//key --> funct2, value--> incstruction
+instruction_map CA_instructions = {{3, "C.AND"},
+                                   {2, "C.OR"},
+                                   {1, "C.XOR"},
+                                   {0, "C.SUB"}};
 
 #endif

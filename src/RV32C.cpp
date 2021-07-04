@@ -95,10 +95,10 @@ void RV32C::print_instruction(int pc)
         switch (funct3)
         {
         case 2:
-            std::cout << "\tLW\t" << rs2 << ", " << imm << "(" << rs1 << ")\n";
+            std::cout << "\tC.LW\t" << rs2 << ", " << imm << "(" << rs1 << ")\n";
             break;
         case 6:
-            std::cout << "\tSW\t" << rs2 << ", " << imm << "(" << rs1 << ")\n";
+            std::cout << "\tC.SW\t" << rs2 << ", " << imm << "(" << rs1 << ")\n";
             break;
         default:
             std::cout << "Unknown instruction\n";
@@ -110,28 +110,28 @@ void RV32C::print_instruction(int pc)
         switch (funct3)
         {
         case 0:
-            std::cout << "\tADDI\t" << rs1 << ", " << rs1 << ", " << imm << "\n";
+            std::cout << "\tC.ADDI\t" << rs1 << ", " << imm << "\n";
             break;
         case 1:
-            std::cout << "\tJAL\tra, " << imm << "\n"; //get_ABI_name of x1
+            std::cout << "\tC.JAL\tra, " << imm << "\n"; //get_ABI_name of x1
             break;
         case 3:
-            std::cout << "\tLUI\t" << rs1 << ", " << imm << "\n";
+            std::cout << "\tC.LUI\t" << rs1 << ", " << imm << "\n";
             break;
         case 4:
             switch (funct6 & 0x3) //instW[10:11]
             {
             case 0:
-                std::cout << "\tSRLI\t" << rs1 << ", " << rs1 << ", " << imm << "\n";
+                std::cout << "\tC.SRLI\t" << rs1 << ", " << imm << "\n";
                 break;
             case 1:
-                std::cout << "\tSRAI\t" << rs1 << ", " << rs1 << ", " << imm << "\n";
+                std::cout << "\tC.SRAI\t" << rs1 << ", " << imm << "\n";
                 break;
             case 2:
-                std::cout << "\tANDI\t" << rs1 << ", " << rs1 << ", " << imm << "\n";
+                std::cout << "\tC.ANDI\t" << rs1 << ", " << imm << "\n";
                 break;
-            case 3:
-                std::cout << "\t" << CA_instructions[funct2] << "\t" << rs1 << ", " << rs2 << ", " << imm << "\n";
+            case 3: //C.AND, C.OR, C.XOR, C.SUB
+                std::cout << "\t" << CA_instructions[funct2] << "\t" << rs1 << ", " << rs2 << "\n";
                 break;
             default:
                 std::cout << "Unknown instruction\n";
@@ -149,19 +149,18 @@ void RV32C::print_instruction(int pc)
         switch (funct3)
         {
         case 0: //SLLI
-            std::cout << "\tSLLI\t" << rs1 << ", " << rs1 << ", " << imm << "\n";
+            std::cout << "\tC.SLLI\t" << rs1 << ", " << imm << "\n";
             break;
         case 4: // C. ADD, EBREAK, JALR
             if (rs1 != "zero" && rs2 != "zero")
-                std::cout << "\tADD\t" << rs2 << ", " << rs1 << ", " << rs1;
+                std::cout << "\tC.ADD\t" << rs1 << ", " << rs2 << "\n";
             if (rs2 == "zero" && rs1 == "zero")
-                std::cout << "\tEBREAK\t";
+                std::cout << "\tC.EBREAK\t\n";
             if (rs2 == "zero" && rs1 != "zero")
-                std::cout << "\tJALR\tra, 0(" << rs1 << ")";
+                std::cout << "\tC.JALR\t " << rs1 << "\n";
             else
-                std::cout << "Unknown instruction";
+                std::cout << "Unknown instruction\n";
 
-            std::cout << "\n";
             break;
         default:
             std::cout << "Unknown instruction\n";

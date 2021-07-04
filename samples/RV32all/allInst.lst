@@ -36,7 +36,7 @@ Disassembly of section .text:
   58:	c016                	sw	t0,0(sp)
   5a:	4402                	lw	s0,0(sp)
   5c:	0111                	addi	sp,sp,4
-  5e:	0c200413          	li	s0,194
+  5e:	0d200413          	li	s0,210
   62:	00040983          	lb	s3,0(s0)
   66:	1171                	addi	sp,sp,-4
   68:	01310023          	sb	s3,0(sp)
@@ -71,18 +71,30 @@ Disassembly of section .text:
   aa:	00506263          	bltu	zero,t0,ae <FILU>
 
 000000ae <FILU>:
-  ae:	0002f263          	bgeu	t0,zero,b2 <FILK>
+  ae:	00504263          	bgtz	t0,b2 <FAAA>
 
-000000b2 <FILK>:
-  b2:	2009                	jal	b4 <Label>
+000000b2 <FAAA>:
+  b2:	00506263          	bltu	zero,t0,b6 <FAAB>
 
-000000b4 <Label>:
-  b4:	8082                	ret
+000000b6 <FAAB>:
+  b6:	0002d263          	bgez	t0,ba <FABA>
 
-000000b6 <_start>:
-  b6:	00010117          	auipc	sp,0x10
-  ba:	f4a10113          	addi	sp,sp,-182 # 10000 <_stack_start>
-  be:	3789                	jal	0 <main>
+000000ba <FABA>:
+  ba:	0002f263          	bgeu	t0,zero,be <FILL>
 
-000000c0 <loop>:
-  c0:	a001                	j	c0 <loop>
+000000be <FILL>:
+  be:	0002f263          	bgeu	t0,zero,c2 <FILK>
+
+000000c2 <FILK>:
+  c2:	2009                	jal	c4 <Label>
+
+000000c4 <Label>:
+  c4:	8082                	ret
+
+000000c6 <_start>:
+  c6:	00010117          	auipc	sp,0x10
+  ca:	f3a10113          	addi	sp,sp,-198 # 10000 <_stack_start>
+  ce:	3f0d                	jal	0 <main>
+
+000000d0 <loop>:
+  d0:	a001                	j	d0 <loop>

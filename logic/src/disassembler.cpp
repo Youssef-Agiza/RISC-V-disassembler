@@ -1,6 +1,6 @@
 #include "../headers/disassembler.h"
 
-Disassembler::Disassembler() : decoder_(new RV32I()), pc_(0x0), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
+Disassembler::Disassembler() : decoder_(new RV32I()), pc_(0x4), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
 
 Disassembler::~Disassembler()
 {
@@ -18,6 +18,7 @@ void Disassembler::read_file(char *file_name)
 
     fsize_ = inFile.tellg();
     inFile.seekg(0, inFile.beg);
+
     if (!inFile.read((char *)memory_, fsize_))
         emit_error("Cannot read from input file\n");
 }
@@ -27,6 +28,7 @@ void Disassembler::check_inst_type()
     unsigned int opcode_initial = memory_[pc_] & 0x3;
     int decoder_type = decoder_->get_decoder_type();
 
+    // std::cout << "opcode: " << opcode_initial << "\t type:" << decoder_type << "\tmemory: " << std::hex << memory_[pc_] << "\n";
     if (opcode_initial == 0x3 && decoder_type != 1)
         change_decoder(new RV32I());
 

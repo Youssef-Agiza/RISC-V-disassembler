@@ -1,6 +1,11 @@
 #include "../headers/RV32C.h"
 #include "../headers/instMap32C.h"
 
+void RV32C::extract_opcode(unsigned int instW)
+{
+    opcode = instW & 0x3;
+}
+
 void RV32C::extract_immediates(unsigned int instW)
 {
     if (opcode == 0) //SW & LW
@@ -166,22 +171,39 @@ void RV32C::print_instruction(int pc)
 }
 std::string RV32C::get_ABI_name(unsigned int reg)
 {
-    if (reg > 9)
+
+    if (opcode && (reg < 31)) //CR, CI formats
     {
-        std::cout << "invalid register number";
-        return "";
+
+        std::string initial_ABIs[] = {"zero", "ra", "sp", "gp", "tp"};
+        if (reg < 5)
+            return initial_ABIs[reg];
+
+        if ((reg > 4 && reg < 8)) //temporaries
+            return "t" + std::to_string(reg - 5);
+        if (reg > 27) //temporaries
+            return "t" + std::to_string(reg - 25);
+
+        if (reg > 9 && reg < 18) //a0-7
+            return "a" + std::to_string(reg - 10);
+
+        if (reg == 8 || reg == 9) //s0 & s1
+            return "s" + std::to_string(reg - 8);
+
+        return "s" + std::to_string(reg - 16); //s2-11
     }
 
-    std::string ABIs[] = {"s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5"};
-    return ABIs[reg];
+    else if (opcode && (reg < 8)) // CL, CS, CA, and CB formats.
+    {
+        std::string ABIs[] = {"s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5"};
+        return ABIs[reg];
+    }
+    else
+    {
+        std::cout << "\ninvalid register number\n";
+        return "";
+    }
 }
 
 RV32C::RV32C() { inst_size = 2; }
 RV32C::~RV32C() {}
-
-void RV32C::decode_word(unsigned int instW, unsigned int pc)
-{
-    extract_functs(instW);
-    extract_regs(instW);
-    print_prefix(instW, pc);
-}

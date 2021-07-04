@@ -41,10 +41,10 @@ void Disassembler::disassemble(char *file_name)
                    (((unsigned char)memory_[pc_ + 1]) << 8) |
                    (((unsigned char)memory_[pc_ + 2]) << 16) |
                    (((unsigned char)memory_[pc_ + 3]) << 24);
-        pc_ += decoder_->get_inst_size();
-        if (pc_ >= fsize_ + 4)
-            break;
         decoder_->decode_word(instWord, pc_);
+        pc_ += decoder_->get_inst_size();
+        if (pc_ >= fsize_)
+            break;
     }
 }
 

@@ -4,7 +4,9 @@
 #include "common.h"
 
 /*
-Abstract class interface. Responsible for decoding instruction word.
+ . Abstract class interface.
+ . Provide interfacte for decoding int instruction word.
+ . Children classes will implement the decoding details according the ISA.
 */
 class RVDecoder
 {
@@ -24,7 +26,15 @@ protected:
     std::map<int, std::string> lbl_map;
     unsigned int lbl_cntr; //label counter
 
-protected: //virtual functions
+protected:
+    /****************
+       pure virtuals
+     ****************/
+
+    //input: instruction word
+    //output: opcode is set
+    virtual void extract_opcode(unsigned int instW) = 0;
+
     //input: instruction word
     //output: I_imm, B_imm, J_imm, U_imm, S_imm are set
     virtual void extract_immediates(unsigned int instW) = 0;
@@ -33,6 +43,9 @@ protected: //virtual functions
     //output: funct3 and funct7 values are set
     virtual void extract_functs(unsigned int instW) = 0;
 
+    //precondition: opcode, functions, and regs are populated
+    //function: check opcode, functions, and regs to ensure they have valid values
+    //ouptut: returns true if valid, and false otherwise.
     virtual bool validate() = 0;
 
     //input: instruction word
@@ -49,6 +62,12 @@ protected: //virtual functions
     //print instruction after opcode and functions are set.
     virtual void print_instruction(int pc) = 0;
 
+    /****************
+       non-pure virtual
+     ****************/
+
+    //input: takes address to where jump/branch will go
+    //output: if doesn't exit, adds this address to lbl_map . else, does nothing.
     inline void generate_label(int address)
     {
         if (lbl_map.find(address) == lbl_map.end())
@@ -56,10 +75,12 @@ protected: //virtual functions
     }
 
 public:
-    RVDecoder() : lbl_cntr(1){};
-    virtual ~RVDecoder() {}
+    RVDecoder();
+    virtual ~RVDecoder();
 
-    virtual void decode_word(unsigned int instW, unsigned int pc) = 0;
+    //input: instruction word, PC
+    //output: calls private functions to decode instruction word.
+    virtual void decode_word(unsigned int instW, unsigned int pc);
 
     //gets instruction size to change pc address accordingly.
     //inst_size will be overidden in chidlren classes

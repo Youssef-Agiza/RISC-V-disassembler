@@ -1,4 +1,4 @@
-#include "RV32I.h"
+#include "../headers/RV32I.h"
 #include "../headers/instMap32I.h"
 
 RV32I::RV32I()
@@ -6,6 +6,11 @@ RV32I::RV32I()
     inst_size = 4;
 }
 RV32I::~RV32I() {}
+
+void RV32I::extract_opcode(unsigned int instW)
+{
+    opcode = instW & 0x0000007F; //& with first 7 bits
+}
 
 void RV32I::print_prefix(unsigned int instA, unsigned int instW)
 {
@@ -97,22 +102,23 @@ void RV32I::extract_regs(unsigned int instW)
     rs1_num = (instW >> 15) & 0x0000001F; // the following 5 bits
     rs2_num = (instW >> 20) & 0x0000001F;
 
-    rd = get_ABI_name(rd_num);
-    rs1 = get_ABI_name(rs1_num);
-    rs2 = get_ABI_name(rs2_num);
+    this->rd = get_ABI_name(rd_num);
+    this->rs1 = get_ABI_name(rs1_num);
+    this->rs2 = get_ABI_name(rs2_num);
 }
 
+//utilitiy
 //input: offset of jump and pc
-//output: address the pc should jump to
-int getJumpAdress(unsigned int offset, int pc)
+//output: lbl_addrs the pc should jump to
+inline int get_label_adress(unsigned int offset, int pc)
 {
-    //handles the case where address is negative
+    //handles the case where lbl_addrs is negative
     return (offset >> 31) ? pc - ((offset ^ 0xFFFFFFFF) + 1) : pc + offset;
 }
 
 void RV32I::print_instruction(int pc)
 {
-    int address; //used for Jump label
+    int lbl_addrs; //used for Jump/Branch labels
     switch (opcode)
     {
     case R_TYPE: // R Instructions
@@ -124,7 +130,9 @@ void RV32I::print_instruction(int pc)
         std::cout << "\t" << I_instructions[funct3] << "\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "\n";
         break;
     case B_TYPE: //B-Type
-        std::cout << "\t" << B_instructions[funct3] << "\t" << rs1 << ", " << rs2 << ", " << std::hex << "0x" << (int)B_imm << "\n";
+        lbl_addrs = get_label_adress(B_imm, pc);
+        generate_label(lbl_addrs);
+        std::cout << "\t" << B_instructions[funct3] << "\t" << rs1 << ", " << rs2 << ", " << std::hex << "0x" << (int)B_imm << "<" << lbl_map[lbl_addrs] << ">\n";
         break;
     case S_TYPE:
         std::cout << "\t" << S_instructions[funct3] << "\t" << rs2 << ", " << S_imm << "(" << rs1 << ")\n";
@@ -136,14 +144,14 @@ void RV32I::print_instruction(int pc)
         std::cout << "\tAUIPC\t" << rd << ", " << std::hex << "0x" << (int)U_imm << "\n";
         break;
     case JAL:
-        address = getJumpAdress(J_imm, pc);
-        generate_label(address);
-        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << lbl_map[address] << ">\n";
+        lbl_addrs = get_label_adress(J_imm, pc);
+        generate_label(lbl_addrs);
+        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << lbl_map[lbl_addrs] << ">\n";
         break;
     case JALR:
-        address = getJumpAdress(I_imm, pc);
-        generate_label(address);
-        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << lbl_map[address] << ">\n";
+        lbl_addrs = get_label_adress(I_imm, pc);
+        generate_label(lbl_addrs);
+        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << lbl_map[lbl_addrs] << ">\n";
         break;
     case SYS_CALL:
         if (!I_imm) //if last 12 bits == 0
@@ -158,23 +166,4 @@ void RV32I::print_instruction(int pc)
         std::cout << "\tUnkown Instruction \n";
         break;
     }
-}
-
-void RV32I::decode_word(unsigned int instW, unsigned int pc)
-{
-    unsigned int instPC = pc - 4;
-
-    /*parsing instWord*/
-    opcode = instW & 0x0000007F; //& with first 7 bits
-    extract_functs(instW);
-    extract_regs(instW);
-    extract_immediates(instW);
-
-    print_prefix(instPC, instW);
-
-    if (!validate())
-        return;
-
-    print_instruction(pc);
-    // printInfo(opcode, funct3, funct7, instW);
 }

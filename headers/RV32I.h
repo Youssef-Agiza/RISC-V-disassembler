@@ -24,6 +24,8 @@ private:
     unsigned int funct7;
 
 private:
+    virtual void extract_opcode(unsigned int instW) override;
+
     virtual void extract_immediates(unsigned int instW) override;
 
     virtual void extract_functs(unsigned int instW) override;
@@ -40,8 +42,6 @@ private:
 public:
     RV32I();
     virtual ~RV32I();
-
-    virtual void decode_word(unsigned int instW, unsigned int pc) override;
 };
 
 #endif //RV32I_H

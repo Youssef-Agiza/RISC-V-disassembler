@@ -10,7 +10,9 @@
 
 //maps for RV32I instructions to get the instructions directly using funct3 and funct7
 
-//key--> (funct3|funct7). value-->instruction name
+//key--> a combination of functs in instruction word.
+//value-->instruction name
+//e.g. in RV32I, key--> (funct3| funct7)
 typedef std::map<unsigned int, std::string> instruction_map;
 
 #endif

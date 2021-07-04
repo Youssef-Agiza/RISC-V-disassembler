@@ -3,6 +3,7 @@
 #define DISASSEMBLER_H
 
 #include "RV32I.h"
+#include "RV32C.h"
 #include "RVDecoder.h"
 #include "common.h"
 #include "utils.h"

@@ -26,15 +26,15 @@ void Disassembler::disassemble(char *file_name)
 {
     read_file(file_name);
 
-    change_decoder(new RV32I());
+    change_decoder(new RV32C());
 
     unsigned int instWord;
     while (true)
     {
         instWord = (unsigned char)memory_[pc_] |
-                   (((unsigned char)memory_[pc_ + 1]) << 8) |
-                   (((unsigned char)memory_[pc_ + 2]) << 16) |
-                   (((unsigned char)memory_[pc_ + 3]) << 24);
+                   (((unsigned char)memory_[pc_ + 1]) << 8); //|
+                                                             //    (((unsigned char)memory_[pc_ + 2]) << 16) |
+                                                             //    (((unsigned char)memory_[pc_ + 3]) << 24);
         decoder_->decode_word(instWord, pc_);
         pc_ += decoder_->get_inst_size();
         if (pc_ >= fsize_)

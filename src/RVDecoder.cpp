@@ -11,10 +11,9 @@ void RVDecoder::decode_word(unsigned int instW, unsigned int pc)
     extract_regs(instW);
     extract_immediates(instW);
 
-    print_prefix(pc, instW);
-
     if (!validate())
         return;
 
+    print_prefix(pc, instW);
     print_instruction(pc);
 }

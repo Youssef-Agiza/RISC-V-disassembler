@@ -108,7 +108,7 @@ void RV32I::extract_regs(unsigned int instW)
 }
 
 //utilitiy
-//input: offset of jump and pc
+//input: offset of jump/branch and pc
 //output: lbl_addrs the pc should jump to
 inline int get_label_adress(unsigned int offset, int pc)
 {

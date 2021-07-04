@@ -2,10 +2,15 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <map>
-#include <string>
-#include <iostream>
+/**************
+ *Common includes and typedefs should be here
+ ***************
+*/
+
+#include <fstream>
 #include <iomanip>
+#include <iostream>
+#include <map>
 #include <string>
 
 //maps for RV32I instructions to get the instructions directly using funct3 and funct7

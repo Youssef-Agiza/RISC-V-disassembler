@@ -2,11 +2,12 @@
 #ifndef RV_DECODER_H
 #define RV_DECODER_H
 #include "common.h"
+#include "utils.h"
 
 /*
- . Abstract class interface.
- . Provide interfacte for decoding int instruction word.
- . Children classes will implement the decoding details according the ISA.
+ * Abstract class interface.
+ * Provide interfacte for decoding int instruction word.
+ * Children classes will implement the decoding details according the ISA.
 */
 class RVDecoder
 {
@@ -45,7 +46,7 @@ protected:
 
     //precondition: opcode, functions, and regs are populated
     //function: check opcode, functions, and regs to ensure they have valid values
-    //ouptut: returns true if valid, and false otherwise.
+    //ouptut: returns true if valid, returns false otherwise.
     virtual bool validate() = 0;
 
     //input: instruction word

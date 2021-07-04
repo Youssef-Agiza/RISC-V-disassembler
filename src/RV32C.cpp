@@ -34,30 +34,56 @@ void RV32C::extract_immediates(unsigned int instW)
 }
 bool RV32C::validate()
 {
+    bool invalid_shift = (imm == 0) || (imm << 4 != 0);            //invalid= shamt==0 || shamt[5]==1
+    bool invalid_addi = (rs1 == "zero" || imm == 0);               //(rd==x0 || nzimm==0)
+    bool invalid_lui = (rs1 == "zero" || rs1 == "ra" || imm == 0); //rd=={x0,x1} || nzimm==0
 
-    /*
-SW
-LW
+    //flags to return true or false
+    bool unknown_inst = false;
+    std::string invalid_inst;
 
+    //SW, LW
+    if (opcode == 0 && (funct3 != 2 || funct3 != 6))
+        unknown_inst = true;
 
-ADDI
-JAL
-LUI
-SRLI
-SRAI
-ANDI
-AND
-OR
-XOR
-SUB
+    //C.ADDI, C.LUI, C.SRLI, C.SRAI
+    if (opcode == 1)
+    {
+        unknown_inst = (funct3 != 0 && funct3 != 3 && funct3 != 4);
 
+        if (funct3 == 0 && invalid_addi) //C.ADDI
+            invalid_inst = "C.ADDI\n";
 
-SLLI
-ADD
-EBREAK
-JALR
-*/
-    return true;
+        if (funct3 == 3 && invalid_lui) //C.LUI
+            invalid_inst = "C.LUI\n";
+
+        if (funct3 == 4) //SRLI & SRAI
+        {
+
+            if (funct6 & 0x3 == 0 && invalid_shift)
+                invalid_inst = "C.SRLI\n";
+
+            if (funct6 & 0x3 == 1 && invalid_shift)
+                invalid_inst = "C.SRAI\n";
+        }
+    }
+
+    //SLLI,ADD,EBREAK,JALR
+    if (opcode == 2)
+    {
+        unknown_inst = (funct3 != 0 || funct3 != 4);
+
+        if (funct3 == 0 && invalid_shift)
+            invalid_inst = "C.SRLI\n";
+    }
+
+    if (unknown_inst)
+        std::cout << "Unknwon RVC instruction: opcode = 0x" << std::hex << opcode << ".\n";
+
+    if (!invalid_inst.empty())
+        std::cout << "Invalid instruction input for " << invalid_inst << ".\n";
+
+    return (invalid_inst.empty() && !unknown_inst);
 }
 
 void RV32C::extract_functs(unsigned int instW)
@@ -113,7 +139,7 @@ void RV32C::print_instruction(int pc)
             std::cout << "\tC.ADDI\t" << rs1 << ", " << imm << "\n";
             break;
         case 1:
-            std::cout << "\tC.JAL\tra, " << imm << "\n"; //get_ABI_name of x1
+            std::cout << "\tC.JAL\t" << imm << "\n";
             break;
         case 3:
             std::cout << "\tC.LUI\t" << rs1 << ", " << imm << "\n";

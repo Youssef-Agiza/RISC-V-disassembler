@@ -1,11 +1,5 @@
 #include "../headers/disassembler.h"
 
-void Disassembler::emit_error(const char *message) //static
-{
-    std::cout << message;
-    exit(1);
-}
-
 Disassembler::Disassembler() : decoder_(nullptr), pc_(0x0), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
 
 Disassembler::~Disassembler()

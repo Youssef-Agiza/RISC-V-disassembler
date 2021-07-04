@@ -21,20 +21,8 @@
 	(2) https://github.com/michaeljclark/riscv-meta/blob/master/meta/opcodes
 */
 
-#include <fstream>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include "stdlib.h"
-#include "../headers/RV32I.h"
 #include "../headers/disassembler.h"
 #include "utils.h"
-
-using namespace std;
-
-unsigned int pc = 0x0;
-
-char memory[8 * 1024]; // only 8KB of memory located at address 0
 
 int main(int argc, char *argv[])
 {

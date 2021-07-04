@@ -1,6 +1,6 @@
 #include "../headers/disassembler.h"
 
-Disassembler::Disassembler() : decoder_(nullptr), pc_(0x0), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
+Disassembler::Disassembler() : decoder_(new RV32I()), pc_(0x0), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
 
 Disassembler::~Disassembler()
 {
@@ -22,21 +22,30 @@ void Disassembler::read_file(char *file_name)
         emit_error("Cannot read from input file\n");
 }
 
+void Disassembler::check_inst_type()
+{
+    unsigned int opcode_initial = memory_[pc_] & 0x3;
+    int decoder_type = decoder_->get_decoder_type();
+
+    if (opcode_initial == 0x3 && decoder_type != 1)
+        change_decoder(new RV32I());
+
+    if (opcode_initial != 0x3 && decoder_type != 2)
+        change_decoder(new RV32C());
+}
+
 void Disassembler::disassemble(char *file_name)
 {
     read_file(file_name);
 
-    change_decoder(new RV32C());
-
-    unsigned int instWord;
     while (true)
     {
-        instWord = (unsigned char)memory_[pc_] |
-                   (((unsigned char)memory_[pc_ + 1]) << 8); //|
-                                                             //    (((unsigned char)memory_[pc_ + 2]) << 16) |
-                                                             //    (((unsigned char)memory_[pc_ + 3]) << 24);
-        decoder_->decode_word(instWord, pc_);
+        check_inst_type();
+
+        decoder_->read_instW(memory_, pc_);
+        decoder_->decode_word(pc_);
         pc_ += decoder_->get_inst_size();
+
         if (pc_ >= fsize_)
             break;
     }
@@ -44,6 +53,7 @@ void Disassembler::disassemble(char *file_name)
 
 void Disassembler::change_decoder(RVDecoder *decoder)
 {
+    std::cout << "Changing decoder\n";
     if (this->decoder_ != nullptr)
         delete this->decoder_;
 

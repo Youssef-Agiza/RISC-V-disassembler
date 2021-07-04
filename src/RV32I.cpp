@@ -3,65 +3,73 @@
 
 RV32I::RV32I()
 {
-    inst_size = 4;
+    inst_size_ = 4;
 }
 RV32I::~RV32I() {}
 
-void RV32I::extract_opcode(unsigned int instW)
+void RV32I::read_instW(const char *memory, unsigned int pc)
 {
-    opcode = instW & 0x0000007F; //& with first 7 bits
+    this->instW_ = (unsigned char)memory[pc] |
+                   (((unsigned char)memory[pc + 1]) << 8) |
+                   (((unsigned char)memory[pc + 2]) << 16) |
+                   (((unsigned char)memory[pc + 3]) << 24);
 }
 
-void RV32I::print_prefix(unsigned int instA, unsigned int instW)
+void RV32I::extract_opcode()
 {
-    std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(8) << instW;
+    opcode_ = instW_ & 0x0000007F; //& with first 7 bits
 }
 
-void RV32I::extract_immediates(unsigned int instW)
+void RV32I::print_prefix(unsigned int instA)
+{
+    std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(8) << instW_;
+}
+
+void RV32I::extract_immediates()
 {
     // — inst[31] — inst[30:25] inst[24:21] inst[20]
-    I_imm = ((instW >> 20) & 0x7FF) | (((instW >> 31) ? 0xFFFFF800 : 0x0));
+    I_imm_ = ((instW_ >> 20) & 0x7FF) | (((instW_ >> 31) ? 0xFFFFF800 : 0x0));
 
     // — inst[31] — inst[7] inst[30:25] inst[11:8]
-    B_imm = (((instW >> 8) & 0xF) << 1) |
-            (((instW >> 25) & 0x3F) << 5) |
-            (((instW >> 7) & 0x1) << 10) |
-            ((instW >> 31) ? 0xFFFFF800 : 0x0);
+    B_imm_ = (((instW_ >> 8) & 0xF) << 1) |
+             (((instW_ >> 25) & 0x3F) << 5) |
+             (((instW_ >> 7) & 0x1) << 10) |
+             ((instW_ >> 31) ? 0xFFFFF800 : 0x0);
 
-    S_imm = (((instW >> 25) & 0x3F) << 5) | (((instW >> 7) & 0x1F));
+    S_imm_ = (((instW_ >> 25) & 0x3F) << 5) | (((instW_ >> 7) & 0x1F));
 
-    U_imm = ((instW >> 12) & 0xFFFFF);
+    U_imm = ((instW_ >> 12) & 0xFFFFF);
 
-    J_imm = (((instW >> 21) & 0x3FF) << 1) |      //inst[30:25]  inst[25:21] 0
-            (((instW >> 20) & 0x1) << 11) |       //inst[20]
-            (((instW >> 12) & 0xFF) << 12) |      //inst [19:12]
-            (((instW >> 31) ? 0xFFF00000 : 0x0)); //— inst[31] —
+    J_imm_ = (((instW_ >> 21) & 0x3FF) << 1) |      //inst[30:25]  inst[25:21] 0
+             (((instW_ >> 20) & 0x1) << 11) |       //inst[20]
+             (((instW_ >> 12) & 0xFF) << 12) |      //inst [19:12]
+             (((instW_ >> 31) ? 0xFFF00000 : 0x0)); //— inst[31] —
 }
 
-void RV32I::extract_functs(unsigned int instW)
+void RV32I::extract_functs()
 {
-    funct3 = (instW >> 12) & 0x00000007;
-    funct7 = (instW >> 25) & 0x0000007F;
+    funct3_ = (instW_ >> 12) & 0x00000007;
+    funct7_ = (instW_ >> 25) & 0x0000007F;
 }
 
 bool RV32I::validate()
 {
 
-    if (funct3 > 7)
+    if (funct3_ > 7)
     {
-        if (opcode == 0x33) //R type
+        if (opcode_ == 0x33) //R type
             std::cout << "\tUnkown R Instruction \n";
-        if (opcode == 0x13) //I type
+        if (opcode_ == 0x13) //I type
             std::cout << "\tUnkown I Instruction \n";
 
         return false;
     }
-    if (opcode == 0x63 && (funct3 == 2 || funct3 == 3 || funct3 > 7)) //B type
+    if (opcode_ == 0x63 && (funct3_ == 2 || funct3_ == 3 || funct3_ > 7)) //B type
     {
         std::cout << "\tUnkown B Instruction \n";
         return false;
     }
-    if (opcode == 0x23 && funct3 > 2)
+    if (opcode_ == 0x23 && funct3_ > 2)
     {
         std::cout << "\tUnkown S Instruction \n";
         return false;
@@ -95,16 +103,16 @@ std::string RV32I::get_ABI_name(unsigned int reg)
     return "s" + std::to_string(reg - 16); //s2-11
 }
 
-void RV32I::extract_regs(unsigned int instW)
+void RV32I::extract_regs()
 {
     unsigned int rd_num, rs1_num, rs2_num;
-    rd_num = (instW >> 7) & 0x0000001F;   // & with the following 5 bits
-    rs1_num = (instW >> 15) & 0x0000001F; // the following 5 bits
-    rs2_num = (instW >> 20) & 0x0000001F;
+    rd_num = (instW_ >> 7) & 0x0000001F;   // & with the following 5 bits
+    rs1_num = (instW_ >> 15) & 0x0000001F; // the following 5 bits
+    rs2_num = (instW_ >> 20) & 0x0000001F;
 
-    this->rd = get_ABI_name(rd_num);
-    this->rs1 = get_ABI_name(rs1_num);
-    this->rs2 = get_ABI_name(rs2_num);
+    this->rd_ = get_ABI_name(rd_num);
+    this->rs1_ = get_ABI_name(rs1_num);
+    this->rs2_ = get_ABI_name(rs2_num);
 }
 
 //utilitiy
@@ -119,48 +127,48 @@ inline int get_label_adress(unsigned int offset, int pc)
 void RV32I::print_instruction(int pc)
 {
     int lbl_addrs; //used for Jump/Branch labels
-    switch (opcode)
+    switch (opcode_)
     {
     case R_TYPE: // R Instructions
-        std::cout << "\t" << R_instructions[(funct3 | funct7)] << "\t" << rd << ", " << rs1 << ", " << rs2 << "\n";
+        std::cout << "\t" << R_instructions[(funct3_ | funct7_)] << "\t" << rd_ << ", " << rs1_ << ", " << rs2_ << "\n";
         break;
     case I_TYPE:
-        if (funct3 == 5)
-            funct3 = (funct3 | funct7);
-        std::cout << "\t" << I_instructions[funct3] << "\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "\n";
+        if (funct3_ == 5)
+            funct3_ = (funct3_ | funct7_);
+        std::cout << "\t" << I_instructions[funct3_] << "\t" << rd_ << ", " << rs1_ << ", " << std::hex << "0x" << (int)I_imm_ << "\n";
         break;
     case B_TYPE: //B-Type
-        lbl_addrs = get_label_adress(B_imm, pc);
+        lbl_addrs = get_label_adress(B_imm_, pc);
         generate_label(lbl_addrs);
-        std::cout << "\t" << B_instructions[funct3] << "\t" << rs1 << ", " << rs2 << ", " << std::hex << "0x" << (int)B_imm << "<" << lbl_map[lbl_addrs] << ">\n";
+        std::cout << "\t" << B_instructions[funct3_] << "\t" << rs1_ << ", " << rs2_ << ", " << std::hex << "0x" << (int)B_imm_ << "<" << lbl_map_[lbl_addrs] << ">\n";
         break;
     case S_TYPE:
-        std::cout << "\t" << S_instructions[funct3] << "\t" << rs2 << ", " << S_imm << "(" << rs1 << ")\n";
+        std::cout << "\t" << S_instructions[funct3_] << "\t" << rs2_ << ", " << S_imm_ << "(" << rs1_ << ")\n";
         break;
     case LUI:
-        std::cout << "\tLUI\t" << rd << ", " << std::hex << "0x" << (int)U_imm << "\n";
+        std::cout << "\tLUI\t" << rd_ << ", " << std::hex << "0x" << (int)U_imm << "\n";
         break;
     case AUIPC:
-        std::cout << "\tAUIPC\t" << rd << ", " << std::hex << "0x" << (int)U_imm << "\n";
+        std::cout << "\tAUIPC\t" << rd_ << ", " << std::hex << "0x" << (int)U_imm << "\n";
         break;
     case JAL:
-        lbl_addrs = get_label_adress(J_imm, pc);
+        lbl_addrs = get_label_adress(J_imm_, pc);
         generate_label(lbl_addrs);
-        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << lbl_map[lbl_addrs] << ">\n";
+        std::cout << "\tJAL\t" << rd_ << ", " << std::hex << "0x" << (int)J_imm_ << "<" << lbl_map_[lbl_addrs] << ">\n";
         break;
     case JALR:
-        lbl_addrs = get_label_adress(I_imm, pc);
+        lbl_addrs = get_label_adress(I_imm_, pc);
         generate_label(lbl_addrs);
-        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << lbl_map[lbl_addrs] << ">\n";
+        std::cout << "\tJALR\t" << rd_ << ", " << rs1_ << ", " << std::hex << "0x" << (int)I_imm_ << "<" << lbl_map_[lbl_addrs] << ">\n";
         break;
     case SYS_CALL:
-        if (!I_imm) //if last 12 bits == 0
+        if (!I_imm_) //if last 12 bits == 0
             std::cout << "\tECALL\n";
         else
             std::cout << "\tEBREAK\n";
         break;
     case LOAD: //Load instructions (I-type) with different opcode
-        std::cout << "\t" << load_instructions[funct3] << "\t" << rd << ", 0x" << std::hex << (int)I_imm << "(" << rs1 << ")\n";
+        std::cout << "\t" << load_instructions[funct3_] << "\t" << rd_ << ", 0x" << std::hex << (int)I_imm_ << "(" << rs1_ << ")\n";
         break;
     default:
         std::cout << "\tUnkown Instruction \n";

@@ -21,27 +21,32 @@ enum OP_CODES
 class RV32I : public RVDecoder
 {
 private:
-    unsigned int funct7;
+    unsigned int funct7_;
+
+    /*immediates*/
+    unsigned int I_imm_, B_imm_, J_imm_, U_imm, S_imm_;
+
+    /*destination register*/
+    std::string rd_;
 
 private:
-    virtual void extract_opcode(unsigned int instW) override;
+    virtual void read_instW(const char *memory, unsigned int pc) override;
 
-    virtual void extract_immediates(unsigned int instW) override;
-
-    virtual void extract_functs(unsigned int instW) override;
+    virtual void extract_opcode() override;
+    virtual void extract_immediates() override;
+    virtual void extract_functs() override;
+    virtual std::string get_ABI_name(unsigned int reg) override;
+    virtual void extract_regs() override;
 
     virtual bool validate() override;
 
-    virtual std::string get_ABI_name(unsigned int reg) override;
-
-    virtual void extract_regs(unsigned int instW) override;
-    virtual void print_prefix(unsigned int instA, unsigned int instW) override;
-
+    virtual void print_prefix(unsigned int instA) override;
     virtual void print_instruction(int pc) override;
 
 public:
     RV32I();
     virtual ~RV32I();
+    virtual inline int get_decoder_type() { return 1; }
 };
 
 #endif //RV32I_H

@@ -1,0 +1,88 @@
+
+./RV32all/allInst.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <main>:
+   0:	431d                	li	t1,7
+   2:	931a                	add	t1,t1,t1
+   4:	40630333          	sub	t1,t1,t1
+   8:	4385                	li	t2,1
+   a:	00734333          	xor	t1,t1,t2
+   e:	000363b3          	or	t2,t1,zero
+  12:	007373b3          	and	t2,t1,t2
+  16:	00639e33          	sll	t3,t2,t1
+  1a:	006e5e33          	srl	t3,t3,t1
+  1e:	406e5e33          	sra	t3,t3,t1
+  22:	006e23b3          	slt	t2,t3,t1
+  26:	007e3333          	sltu	t1,t3,t2
+  2a:	4301                	li	t1,0
+  2c:	4381                	li	t2,0
+  2e:	4e01                	li	t3,0
+  30:	429d                	li	t0,7
+  32:	4281                	li	t0,0
+  34:	00104293          	xori	t0,zero,1
+  38:	0002e293          	ori	t0,t0,0
+  3c:	4285                	li	t0,1
+  3e:	0012f293          	andi	t0,t0,1
+  42:	0286                	slli	t0,t0,0x1
+  44:	0012d293          	srli	t0,t0,0x1
+  48:	4012d293          	srai	t0,t0,0x1
+  4c:	0012a293          	slti	t0,t0,1
+  50:	0012b293          	seqz	t0,t0
+  54:	42a5                	li	t0,9
+  56:	1171                	addi	sp,sp,-4
+  58:	c016                	sw	t0,0(sp)
+  5a:	4402                	lw	s0,0(sp)
+  5c:	0111                	addi	sp,sp,4
+  5e:	0c200413          	li	s0,194
+  62:	00040983          	lb	s3,0(s0)
+  66:	1171                	addi	sp,sp,-4
+  68:	01310023          	sb	s3,0(sp)
+  6c:	0111                	addi	sp,sp,4
+  6e:	0405                	addi	s0,s0,1
+  70:	00044983          	lbu	s3,0(s0)
+  74:	0405                	addi	s0,s0,1
+  76:	00041983          	lh	s3,0(s0)
+  7a:	1171                	addi	sp,sp,-4
+  7c:	01311023          	sh	s3,0(sp)
+  80:	0111                	addi	sp,sp,4
+  82:	0409                	addi	s0,s0,2
+  84:	00045983          	lhu	s3,0(s0)
+  88:	00008067          	ret
+  8c:	00000073          	ecall
+  90:	9002                	ebreak
+  92:	6321                	lui	t1,0x8
+  94:	00008317          	auipc	t1,0x8
+  98:	00000363          	beqz	zero,9e <FILE>
+  9c:	4285                	li	t0,1
+
+0000009e <FILE>:
+  9e:	00501263          	bne	zero,t0,a2 <FILO>
+
+000000a2 <FILO>:
+  a2:	00504263          	bgtz	t0,a6 <FILI>
+
+000000a6 <FILI>:
+  a6:	0002d263          	bgez	t0,aa <FILA>
+
+000000aa <FILA>:
+  aa:	00506263          	bltu	zero,t0,ae <FILU>
+
+000000ae <FILU>:
+  ae:	0002f263          	bgeu	t0,zero,b2 <FILK>
+
+000000b2 <FILK>:
+  b2:	2009                	jal	b4 <Label>
+
+000000b4 <Label>:
+  b4:	8082                	ret
+
+000000b6 <_start>:
+  b6:	00010117          	auipc	sp,0x10
+  ba:	f4a10113          	addi	sp,sp,-182 # 10000 <_stack_start>
+  be:	3789                	jal	0 <main>
+
+000000c0 <loop>:
+  c0:	a001                	j	c0 <loop>

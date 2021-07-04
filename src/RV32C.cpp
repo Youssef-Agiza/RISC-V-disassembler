@@ -1,68 +1,74 @@
 #include "../headers/RV32C.h"
 #include "../headers/instMap32C.h"
 
-RV32C::RV32C() { inst_size = 2; }
+RV32C::RV32C() { inst_size_ = 2; }
 RV32C::~RV32C() {}
 
-void RV32C::extract_opcode(unsigned int instW)
+void RV32C::read_instW(const char *memory, unsigned int pc)
 {
-    opcode = instW & 0x3;
+    this->instW_ = (unsigned char)memory[pc] |
+                   (((unsigned char)memory[pc + 1]) << 8);
 }
 
-void RV32C::extract_immediates(unsigned int instW)
+void RV32C::extract_opcode()
 {
-    if (opcode == 0) //SW & LW
-        //inst[6] inst[12:10] inst[2] 0 0
-        imm = ((((instW >> 5) & 0x1) << 2) |
-               (((instW >> 10) & 0x7) << 3) |
-               (((instW >> 6) & 0x1) << 6))
-              << 2;
+    opcode_ = instW_ & 0x3;
+}
 
-    else if (opcode == 1 && funct3 == 1) //C.JAL
+void RV32C::extract_immediates()
+{
+    if (opcode_ == 0) //SW & LW
+        //inst[6] inst[12:10] inst[2] 0 0
+        imm_ = ((((instW_ >> 5) & 0x1) << 2) |
+                (((instW_ >> 10) & 0x7) << 3) |
+                (((instW_ >> 6) & 0x1) << 6))
+               << 2;
+
+    else if (opcode_ == 1 && funct3_ == 1) //C.JAL
     {
 
         //imm[11|4|9:8|10|6|7|3:1|5]
-        imm = ((((instW >> 12) & 0x1) << 11) | //imm[11]
-               (((instW >> 11) & 0x1) << 4) |  //imm[4]
-               (((instW >> 9) & 0x3) << 8) |   //imm[8:9]
-               (((instW >> 8) & 0x1) << 10) |  //imm[10]
-               (((instW >> 7) & 0x1 << 6)) |   //imm[6]
-               (((instW >> 6) & 0x1 << 7)) |   //imm[7]
-               (((instW >> 3) & 0x7) << 1) |   //imm[3:1]
-               (((instW >> 2) & 0x1) << 5))    //imm[5]
-              << 1;                            //scale by 2
+        imm_ = ((((instW_ >> 12) & 0x1) << 11) | //imm[11]
+                (((instW_ >> 11) & 0x1) << 4) |  //imm[4]
+                (((instW_ >> 9) & 0x3) << 8) |   //imm[8:9]
+                (((instW_ >> 8) & 0x1) << 10) |  //imm[10]
+                (((instW_ >> 7) & 0x1 << 6)) |   //imm[6]
+                (((instW_ >> 6) & 0x1 << 7)) |   //imm[7]
+                (((instW_ >> 3) & 0x7) << 1) |   //imm[3:1]
+                (((instW_ >> 2) & 0x1) << 5))    //imm[5]
+               << 1;                             //scale by 2
     }
-    else // ((opcode == 1 && funct != 1) || opcode == 2)
-        imm = (((instW >> 12) & 0x1) << 5) | ((instW >> 2) & 0xF);
+    else // ((opcode_ == 1 && funct != 1) || opcode_ == 2)
+        imm_ = (((instW_ >> 12) & 0x1) << 5) | ((instW_ >> 2) & 0xF);
 }
 
-void RV32C::extract_functs(unsigned int instW)
+void RV32C::extract_functs()
 {
-    funct2 = (instW >> 5) & 0x3;
-    funct3 = (instW >> 13);
-    funct4 = (instW >> 12);
-    funct6 = (instW >> 10);
+    funct2_ = (instW_ >> 5) & 0x3;
+    funct3_ = (instW_ >> 13);
+    funct4_ = (instW_ >> 12);
+    funct6_ = (instW_ >> 10);
 }
 
-void RV32C::extract_regs(unsigned int instW)
+void RV32C::extract_regs()
 {
     unsigned int rs1_num, rs2_num;
 
-    rs2_num = (instW >> 2) & 0x7;
-    rs1_num = (instW >> 7) & 0x7;
+    rs2_num = (instW_ >> 2) & 0x7;
+    rs1_num = (instW_ >> 7) & 0x7;
 
-    if (opcode == 0x2 || (opcode == 0x1 && funct3 == 0)) //append two more bits to the left for CR, CI fromats
+    if (opcode_ == 0x2 || (opcode_ == 0x1 && funct3_ == 0)) //append two more bits to the left for CR, CI fromats
     {
-        rs2_num = (rs2_num) | (((instW >> 5) & 0x3) << 3);
-        rs1_num = (rs1_num) | (((instW >> 10) & 0x3) << 3);
+        rs2_num = (rs2_num) | (((instW_ >> 5) & 0x3) << 3);
+        rs1_num = (rs1_num) | (((instW_ >> 10) & 0x3) << 3);
     }
-    rs1 = get_ABI_name(rs1_num);
-    rs2 = get_ABI_name(rs2_num);
+    rs1_ = get_ABI_name(rs1_num);
+    rs2_ = get_ABI_name(rs2_num);
 }
 std::string RV32C::get_ABI_name(unsigned int reg)
 {
 
-    if ((opcode == 0x2 || (opcode == 0x1 && funct3 == 0)) && (reg < 31)) //CR, CI formats
+    if ((opcode_ == 0x2 || (opcode_ == 0x1 && funct3_ == 0)) && (reg < 31)) //CR, CI formats use 32 bit registers
     {
 
         std::string initial_ABIs[] = {"zero", "ra", "sp", "gp", "tp"};
@@ -97,52 +103,52 @@ std::string RV32C::get_ABI_name(unsigned int reg)
 
 bool RV32C::validate()
 {
-    bool invalid_shift = (imm == 0) || (imm << 4 != 0);            //invalid= shamt==0 || shamt[5]==1
-    bool invalid_addi = (rs1 == "zero" || imm == 0);               //(rd==x0 || nzimm==0)
-    bool invalid_lui = (rs1 == "zero" || rs1 == "ra" || imm == 0); //rd=={x0,x1} || nzimm==0
+    bool invalid_shift = (imm_ == 0) || (imm_ << 4 != 0);             //invalid= shamt==0 || shamt[5]==1
+    bool invalid_addi = (rs1_ == "zero" || imm_ == 0);                //(rd==x0 || nzimm==0)
+    bool invalid_lui = (rs1_ == "zero" || rs1_ == "ra" || imm_ == 0); //rd=={x0,x1} || nzimm==0
 
     //flags to return true or false
     bool unknown_inst = false;
     std::string invalid_inst;
 
     //SW, LW
-    if (opcode == 0)
-        unknown_inst = (funct3 != 2 && funct3 != 6);
+    if (opcode_ == 0)
+        unknown_inst = (funct3_ != 2 && funct3_ != 6);
 
     //C.ADDI, C.LUI, C.SRLI, C.SRAI
-    if (opcode == 1)
+    if (opcode_ == 1)
     {
-        unknown_inst = (funct3 != 0 && funct3 != 3 && funct3 != 4);
+        unknown_inst = (funct3_ != 0 && funct3_ != 3 && funct3_ != 4);
 
-        if (funct3 == 0 && invalid_addi) //C.ADDI
+        if (funct3_ == 0 && invalid_addi) //C.ADDI
             invalid_inst = "C.ADDI\n";
 
-        if (funct3 == 3 && invalid_lui) //C.LUI
+        if (funct3_ == 3 && invalid_lui) //C.LUI
             invalid_inst = "C.LUI\n";
 
-        if (funct3 == 4) //SRLI & SRAI
+        if (funct3_ == 4) //SRLI & SRAI
         {
 
-            if (funct6 & 0x3 == 0 && invalid_shift)
+            if (funct6_ & 0x3 == 0 && invalid_shift)
                 invalid_inst = "C.SRLI\n";
 
-            if (funct6 & 0x3 == 1 && invalid_shift)
+            if (funct6_ & 0x3 == 1 && invalid_shift)
                 invalid_inst = "C.SRAI\n";
         }
     }
 
     //SLLI,ADD,EBREAK,JALR
-    if (opcode == 2)
+    if (opcode_ == 2)
     {
-        unknown_inst = (funct3 != 0 && funct3 != 4);
+        unknown_inst = (funct3_ != 0 && funct3_ != 4);
 
-        if (funct3 == 0 && invalid_shift)
+        if (funct3_ == 0 && invalid_shift)
             invalid_inst = "C.SRLI\n";
     }
 
     if (unknown_inst)
     {
-        std::cout << "Unknwon RVC instruction: opcode = 0x" << std::hex << opcode << ".\n";
+        std::cout << "Unknwon RVC instruction: opcode = 0x" << std::hex << opcode_ << ".\n";
         exit(1);
     }
 
@@ -152,46 +158,46 @@ bool RV32C::validate()
     return (invalid_inst.empty() && !unknown_inst);
 }
 
-void RV32C::print_prefix(unsigned int instA, unsigned int instW)
+void RV32C::print_prefix(unsigned int instA)
 {
-    std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(4) << instW;
+    std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(4) << instW_;
 }
 void RV32C::print_instruction(int pc)
 {
-    if (opcode == 0)
+    if (opcode_ == 0)
     {
-        switch (funct3)
+        switch (funct3_)
         {
         case 2:
-            std::cout << "\tC.LW\t" << rs2 << ", " << imm << "(" << rs1 << ")\n";
+            std::cout << "\tC.LW\t" << rs2_ << ", " << imm_ << "(" << rs1_ << ")\n";
             break;
         case 6:
-            std::cout << "\tC.SW\t" << rs2 << ", " << imm << "(" << rs1 << ")\n";
+            std::cout << "\tC.SW\t" << rs2_ << ", " << imm_ << "(" << rs1_ << ")\n";
             break;
         default:
             std::cout << "Unknown instruction\n";
             break;
         }
     }
-    else if (opcode == 1)
+    else if (opcode_ == 1)
     {
-        switch (funct3)
+        switch (funct3_)
         {
         case 0:
-            std::cout << "\tC.ADDI\t" << rs1 << ", 0x" << imm << "\n";
+            std::cout << "\tC.ADDI\t" << rs1_ << ", 0x" << imm_ << "\n";
             break;
         case 1:
-            std::cout << "\tC.JAL\t0x" << imm << "\n";
+            std::cout << "\tC.JAL\t0x" << imm_ << "\n";
             break;
         case 3:
-            std::cout << "\tC.LUI\t" << rs1 << ", 0x" << imm << "\n";
+            std::cout << "\tC.LUI\t" << rs1_ << ", 0x" << imm_ << "\n";
             break;
         case 4:
-            //funct6 &0x3 --> instW[10:11]
-            if (funct6 & 0x3 == 3) //C.AND, C.OR, C.XOR, C.SUB
-                std::cout << "\t" << CA_instructions[funct2] << "\t" << rs1 << ", " << rs2 << "\n";
+            //funct6_ &0x3 --> instW[10:11]
+            if (funct6_ & 0x3 == 3) //C.AND, C.OR, C.XOR, C.SUB
+                std::cout << "\t" << CA_instructions[funct2_] << "\t" << rs1_ << ", " << rs2_ << "\n";
             else //C.SRLI, C.SRAI, C.ANDI
-                std::cout << "\t" << CB_instructions[funct6 & 0x3] << "\t" << rs1 << ", 0x" << imm << "\n";
+                std::cout << "\t" << CB_instructions[funct6_ & 0x3] << "\t" << rs1_ << ", 0x" << imm_ << "\n";
             break;
 
         default:
@@ -199,22 +205,22 @@ void RV32C::print_instruction(int pc)
             break;
         }
     }
-    else if (opcode == 2)
+    else if (opcode_ == 2)
     {
-        switch (funct3)
+        switch (funct3_)
         {
         case 0: //SLLI
-            std::cout << "\tC.SLLI\t" << rs1 << ", " << imm << "\n";
+            std::cout << "\tC.SLLI\t" << rs1_ << ", " << imm_ << "\n";
             break;
         case 4: // C. ADD, EBREAK, JALR
-            if (rs1 != "zero" && rs2 != "zero")
-                std::cout << "\tC.ADD\t" << rs1 << ", " << rs2 << "\n";
+            if (rs1_ != "zero" && rs2_ != "zero")
+                std::cout << "\tC.ADD\t" << rs1_ << ", " << rs2_ << "\n";
 
-            else if (rs2 == "zero" && rs1 == "zero")
+            else if (rs2_ == "zero" && rs1_ == "zero")
                 std::cout << "\tC.EBREAK\t\n";
 
-            else if (rs2 == "zero" && rs1 != "zero")
-                std::cout << "\tC.JALR\t " << rs1 << "\n";
+            else if (rs2_ == "zero" && rs1_ != "zero")
+                std::cout << "\tC.JALR\t " << rs1_ << "\n";
 
             else
                 std::cout << "Unknown instruction\n";
@@ -226,15 +232,3 @@ void RV32C::print_instruction(int pc)
         }
     }
 }
-
-/*
-CR, CI, CSS
-C.ADDI
-C.JALR
-C.LUI
-C.SLLI
-C.ADD
-
-CL, CS, CA, CB
-
-*/

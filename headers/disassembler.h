@@ -16,15 +16,15 @@ private:
     char *memory_;
     unsigned int fsize_;
 
-    static void emitError(const char *message);
+    static void emit_error(const char *message);
 
 public:
     Disassembler();
     ~Disassembler();
     void disassemble(char *file_name);
-    void changeDecoder(RVDecoder *decoder);
+    void change_decoder(RVDecoder *decoder);
 
-    void readFile(char *file_name);
+    void read_file(char *file_name);
 };
 
 #endif

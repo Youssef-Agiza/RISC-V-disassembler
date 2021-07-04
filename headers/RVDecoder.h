@@ -18,52 +18,52 @@ protected:
     std::string rs1, rs2, rd;
 
     //instruction size. overridden in children classes to change pc
-    unsigned int instSize;
+    unsigned int inst_size;
 
     /*jump addresses are mapped to their label and stored here*/
-    std::map<int, std::string> labels_map;
-    unsigned int label_counter;
+    std::map<int, std::string> lbl_map;
+    unsigned int lbl_cntr; //label counter
 
 protected: //virtual functions
     //input: instruction word
     //output: I_imm, B_imm, J_imm, U_imm, S_imm are set
-    virtual void extractImmediates(unsigned int instW) = 0;
+    virtual void extract_immediates(unsigned int instW) = 0;
 
     //input: instruction word
     //output: funct3 and funct7 values are set
-    virtual void extractFuncts(unsigned int instW) = 0;
+    virtual void extract_functs(unsigned int instW) = 0;
 
-    virtual bool validateFuncts() = 0;
+    virtual bool validate() = 0;
 
     //input: instruction word
     //output: rd, rs1, and rs2 values are set
-    virtual void extractRegs(unsigned int instW) = 0;
+    virtual void extract_regs(unsigned int instW) = 0;
 
     //input: reg number
     //output: ABI name
-    virtual std::string getABIName(unsigned int reg) = 0;
+    virtual std::string get_ABI_name(unsigned int reg) = 0;
 
     //prints instructionPC and instruction word.
-    virtual void printPrefix(unsigned int instPC, unsigned int instW) = 0;
+    virtual void print_prefix(unsigned int instPC, unsigned int instW) = 0;
 
     //print instruction after opcode and functions are set.
-    virtual void printInstruction(int pc) = 0;
+    virtual void print_instruction(int pc) = 0;
 
-    virtual void generateLabel(int address)
+    inline void generate_label(int address)
     {
-        if (labels_map.find(address) == labels_map.end())
-            labels_map[address] = "L" + std::to_string(label_counter++);
+        if (lbl_map.find(address) == lbl_map.end())
+            lbl_map[address] = "L" + std::to_string(lbl_cntr++);
     }
 
 public:
-    RVDecoder() : label_counter(1){};
+    RVDecoder() : lbl_cntr(1){};
     virtual ~RVDecoder() {}
 
-    virtual void decodeWord(unsigned int instW, unsigned int pc) = 0;
+    virtual void decode_word(unsigned int instW, unsigned int pc) = 0;
 
     //gets instruction size to change pc address accordingly.
-    //instSize will be overidden in chidlren classes
-    unsigned int getInstSize() { return this->instSize; } //for pc address
+    //inst_size will be overidden in chidlren classes
+    inline unsigned int get_inst_size() { return this->inst_size; } //for pc address
 };
 
 #endif //RVDECODER_H

@@ -35,7 +35,7 @@ unsigned int pc = 0x0;
 
 char memory[8 * 1024]; // only 8KB of memory located at address 0
 
-void emitError(const char *s)
+void emit_error(const char *s)
 {
 	cout << s;
 	exit(0);
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 {
 
 	if (argc < 2)
-		emitError("use: rvcdiss <machine_code_file_name>\n");
+		emit_error("use: rvcdiss <machine_code_file_name>\n");
 
 	Disassembler disassembler;
 	disassembler.disassemble(argv[1]);

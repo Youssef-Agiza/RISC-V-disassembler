@@ -1,7 +1,7 @@
 #include "../headers/RV32C.h"
 #include "../headers/instMap32C.h"
 
-void RV32C::extractImmediates(unsigned int instW)
+void RV32C::extract_immediates(unsigned int instW)
 {
     if (opcode == 0) //SW & LW
         //inst[6] inst[12:10] inst[2] 0 0
@@ -27,7 +27,7 @@ void RV32C::extractImmediates(unsigned int instW)
     else // ((opcode == 1 && funct != 1) || opcode == 2)
         imm = (((instW >> 12) & 0x1) << 5) | ((instW >> 2) & 0xF);
 }
-bool RV32C::validateFuncts()
+bool RV32C::validate()
 {
 
     /*
@@ -55,7 +55,7 @@ JALR
     return true;
 }
 
-void RV32C::extractFuncts(unsigned int instW)
+void RV32C::extract_functs(unsigned int instW)
 {
     funct2 = (instW >> 5) & 0x3;
     funct3 = (instW >> 13);
@@ -63,7 +63,7 @@ void RV32C::extractFuncts(unsigned int instW)
     funct6 = (instW >> 10);
 }
 
-void RV32C::extractRegs(unsigned int instW)
+void RV32C::extract_regs(unsigned int instW)
 {
     unsigned int rs1_num, rs2_num;
 
@@ -75,15 +75,15 @@ void RV32C::extractRegs(unsigned int instW)
         rs2_num = (rs2_num) | (((instW >> 5) & 0x3) << 3);
         rs1_num = (rs1_num) | (((instW >> 10) & 0x3) << 3);
     }
-    rs1 = getABIName(rs1_num);
-    rs2 = getABIName(rs2_num);
+    rs1 = get_ABI_name(rs1_num);
+    rs2 = get_ABI_name(rs2_num);
 }
-void RV32C::printPrefix(unsigned int instA, unsigned int instW)
+void RV32C::print_prefix(unsigned int instA, unsigned int instW)
 {
     unsigned int instHW = instW >> 4;
     std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(4) << instHW;
 }
-void RV32C::printInstruction(int pc)
+void RV32C::print_instruction(int pc)
 {
     if (opcode == 0)
     {
@@ -108,7 +108,7 @@ void RV32C::printInstruction(int pc)
             std::cout << "\tADDI\t" << rs1 << ", " << rs1 << ", " << imm << "\n";
             break;
         case 1:
-            std::cout << "\tJAL\tra, " << imm << "\n"; //getABIName of x1
+            std::cout << "\tJAL\tra, " << imm << "\n"; //get_ABI_name of x1
             break;
         case 3:
             std::cout << "\tLUI\t" << rs1 << ", " << imm << "\n";
@@ -164,7 +164,7 @@ void RV32C::printInstruction(int pc)
         }
     }
 }
-std::string RV32C::getABIName(unsigned int reg)
+std::string RV32C::get_ABI_name(unsigned int reg)
 {
     if (reg > 9)
     {
@@ -176,12 +176,12 @@ std::string RV32C::getABIName(unsigned int reg)
     return ABIs[reg];
 }
 
-RV32C::RV32C() { instSize = 2; }
+RV32C::RV32C() { inst_size = 2; }
 RV32C::~RV32C() {}
 
-void RV32C::decodeWord(unsigned int instW, unsigned int pc)
+void RV32C::decode_word(unsigned int instW, unsigned int pc)
 {
-    extractFuncts(instW);
-    extractRegs(instW);
-    printPrefix(instW, pc);
+    extract_functs(instW);
+    extract_regs(instW);
+    print_prefix(instW, pc);
 }

@@ -1,6 +1,6 @@
 #include "../headers/disassembler.h"
 
-void Disassembler::emitError(const char *message) //static
+void Disassembler::emit_error(const char *message) //static
 {
     std::cout << message;
     exit(1);
@@ -14,25 +14,25 @@ Disassembler::~Disassembler()
     if (decoder_)
         delete decoder_;
 }
-void Disassembler::readFile(char *file_name)
+void Disassembler::read_file(char *file_name)
 {
     std::ifstream inFile;
     inFile.open(file_name, std::ios::in | std::ios::binary | std::ios::ate);
 
     if (!inFile.is_open())
-        emitError("Cannot access input file\n");
+        emit_error("Cannot access input file\n");
 
     fsize_ = inFile.tellg();
     inFile.seekg(0, inFile.beg);
     if (!inFile.read((char *)memory_, fsize_))
-        emitError("Cannot read from input file\n");
+        emit_error("Cannot read from input file\n");
 }
 
 void Disassembler::disassemble(char *file_name)
 {
-    readFile(file_name);
+    read_file(file_name);
 
-    changeDecoder(new RV32I());
+    change_decoder(new RV32I());
 
     unsigned int instWord;
     while (true)
@@ -41,14 +41,14 @@ void Disassembler::disassemble(char *file_name)
                    (((unsigned char)memory_[pc_ + 1]) << 8) |
                    (((unsigned char)memory_[pc_ + 2]) << 16) |
                    (((unsigned char)memory_[pc_ + 3]) << 24);
-        pc_ += decoder_->getInstSize();
+        pc_ += decoder_->get_inst_size();
         if (pc_ >= fsize_ + 4)
             break;
-        decoder_->decodeWord(instWord, pc_);
+        decoder_->decode_word(instWord, pc_);
     }
 }
 
-void Disassembler::changeDecoder(RVDecoder *decoder)
+void Disassembler::change_decoder(RVDecoder *decoder)
 {
     if (this->decoder_ != nullptr)
         delete this->decoder_;

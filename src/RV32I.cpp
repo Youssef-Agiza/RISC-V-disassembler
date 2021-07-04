@@ -3,16 +3,16 @@
 
 RV32I::RV32I()
 {
-    instSize = 4;
+    inst_size = 4;
 }
 RV32I::~RV32I() {}
 
-void RV32I::printPrefix(unsigned int instA, unsigned int instW)
+void RV32I::print_prefix(unsigned int instA, unsigned int instW)
 {
     std::cout << "0x" << std::hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << std::setw(8) << instW;
 }
 
-void RV32I::extractImmediates(unsigned int instW)
+void RV32I::extract_immediates(unsigned int instW)
 {
     // — inst[31] — inst[30:25] inst[24:21] inst[20]
     I_imm = ((instW >> 20) & 0x7FF) | (((instW >> 31) ? 0xFFFFF800 : 0x0));
@@ -33,13 +33,13 @@ void RV32I::extractImmediates(unsigned int instW)
             (((instW >> 31) ? 0xFFF00000 : 0x0)); //— inst[31] —
 }
 
-void RV32I::extractFuncts(unsigned int instW)
+void RV32I::extract_functs(unsigned int instW)
 {
     funct3 = (instW >> 12) & 0x00000007;
     funct7 = (instW >> 25) & 0x0000007F;
 }
 
-bool RV32I::validateFuncts()
+bool RV32I::validate()
 {
 
     if (funct3 > 7)
@@ -64,7 +64,7 @@ bool RV32I::validateFuncts()
     return true;
 }
 
-std::string RV32I::getABIName(unsigned int reg)
+std::string RV32I::get_ABI_name(unsigned int reg)
 {
     if (reg > 31)
     {
@@ -90,16 +90,16 @@ std::string RV32I::getABIName(unsigned int reg)
     return "s" + std::to_string(reg - 16); //s2-11
 }
 
-void RV32I::extractRegs(unsigned int instW)
+void RV32I::extract_regs(unsigned int instW)
 {
     unsigned int rd_num, rs1_num, rs2_num;
     rd_num = (instW >> 7) & 0x0000001F;   // & with the following 5 bits
     rs1_num = (instW >> 15) & 0x0000001F; // the following 5 bits
     rs2_num = (instW >> 20) & 0x0000001F;
 
-    rd = getABIName(rd_num);
-    rs1 = getABIName(rs1_num);
-    rs2 = getABIName(rs2_num);
+    rd = get_ABI_name(rd_num);
+    rs1 = get_ABI_name(rs1_num);
+    rs2 = get_ABI_name(rs2_num);
 }
 
 //input: offset of jump and pc
@@ -110,7 +110,7 @@ int getJumpAdress(unsigned int offset, int pc)
     return (offset >> 31) ? pc - ((offset ^ 0xFFFFFFFF) + 1) : pc + offset;
 }
 
-void RV32I::printInstruction(int pc)
+void RV32I::print_instruction(int pc)
 {
     int address; //used for Jump label
     switch (opcode)
@@ -137,13 +137,13 @@ void RV32I::printInstruction(int pc)
         break;
     case JAL:
         address = getJumpAdress(J_imm, pc);
-        generateLabel(address);
-        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << labels_map[address] << ">\n";
+        generate_label(address);
+        std::cout << "\tJAL\t" << rd << ", " << std::hex << "0x" << (int)J_imm << "<" << lbl_map[address] << ">\n";
         break;
     case JALR:
         address = getJumpAdress(I_imm, pc);
-        generateLabel(address);
-        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << labels_map[address] << ">\n";
+        generate_label(address);
+        std::cout << "\tJALR\t" << rd << ", " << rs1 << ", " << std::hex << "0x" << (int)I_imm << "<" << lbl_map[address] << ">\n";
         break;
     case SYS_CALL:
         if (!I_imm) //if last 12 bits == 0
@@ -160,21 +160,21 @@ void RV32I::printInstruction(int pc)
     }
 }
 
-void RV32I::decodeWord(unsigned int instW, unsigned int pc)
+void RV32I::decode_word(unsigned int instW, unsigned int pc)
 {
     unsigned int instPC = pc - 4;
 
     /*parsing instWord*/
     opcode = instW & 0x0000007F; //& with first 7 bits
-    extractFuncts(instW);
-    extractRegs(instW);
-    extractImmediates(instW);
+    extract_functs(instW);
+    extract_regs(instW);
+    extract_immediates(instW);
 
-    printPrefix(instPC, instW);
+    print_prefix(instPC, instW);
 
-    if (!validateFuncts())
+    if (!validate())
         return;
 
-    printInstruction(pc);
+    print_instruction(pc);
     // printInfo(opcode, funct3, funct7, instW);
 }

@@ -43,6 +43,11 @@ private:
     virtual void print_prefix(unsigned int instA) override;
     virtual void print_instruction(int pc) override;
 
+    virtual inline int get_label_address(unsigned int offset, int pc) override
+    {
+        return (offset >> 31) ? pc - ((offset ^ 0xFFFFFFFF) + 1) : pc + offset;
+    }
+
 public:
     RV32I();
     virtual ~RV32I();

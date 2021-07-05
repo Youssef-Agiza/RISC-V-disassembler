@@ -28,7 +28,6 @@ void Disassembler::check_inst_type()
     unsigned int opcode_initial = memory_[pc_] & 0x3;
     int decoder_type = decoder_->get_decoder_type();
 
-    // std::cout << "opcode: " << opcode_initial << "\t type:" << decoder_type << "\tmemory: " << std::hex << memory_[pc_] << "\n";
     if (opcode_initial == 0x3 && decoder_type != 1)
         change_decoder(new RV32I());
 
@@ -55,7 +54,6 @@ void Disassembler::disassemble(char *file_name)
 
 void Disassembler::change_decoder(RVDecoder *decoder)
 {
-    std::cout << "Changing decoder\n";
     if (this->decoder_ != nullptr)
         delete this->decoder_;
 

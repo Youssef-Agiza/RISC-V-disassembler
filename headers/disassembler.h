@@ -7,7 +7,6 @@
 #include "RVDecoder.h"
 #include "common.h"
 #include "utils.h"
-#include <typeinfo>
 
 class Disassembler
 {

@@ -1,6 +1,8 @@
 #include "RVDecoder.h"
 
-RVDecoder::RVDecoder() : lbl_cntr_(1) {}
+unsigned int RVDecoder::lbl_cntr_ = 1;
+
+RVDecoder::RVDecoder() {}
 RVDecoder::~RVDecoder() {}
 
 void RVDecoder::decode_word(unsigned int pc)

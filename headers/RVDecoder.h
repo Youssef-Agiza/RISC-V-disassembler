@@ -22,7 +22,7 @@ protected:
 
     /*jump addresses are mapped to their label and stored here*/
     std::map<int, std::string> lbl_map_;
-    unsigned int lbl_cntr_; //label counter
+    static unsigned int lbl_cntr_; //label counter
 
 protected:
     /****************
@@ -32,7 +32,7 @@ protected:
     //output: opcode_ is set
     virtual void extract_opcode() = 0;
 
-    //output: I_imm_, B_imm, J_imm, U_imm, S_imm are set
+    //output: all immediates are set
     virtual void extract_immediates() = 0;
 
     //output: function values are set
@@ -55,6 +55,11 @@ protected:
 
     //print instruction after opcode_ and functions are set.
     virtual void print_instruction(int pc) = 0;
+
+    //utilitiy: handles negative offset
+    //input: offset of jump/branch and pc
+    //output: lbl_addrs the pc should jump to
+    virtual int get_label_address(unsigned int offset, int pc) = 0;
 
     /****************
        non-pure virtual

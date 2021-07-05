@@ -115,14 +115,14 @@ void RV32I::extract_regs()
     this->rs2_ = get_ABI_name(rs2_num);
 }
 
-//utilitiy
-//input: offset of jump/branch and pc
-//output: lbl_addrs the pc should jump to
-inline int get_label_adress(unsigned int offset, int pc)
-{
-    //handles the case where lbl_addrs is negative
-    return (offset >> 31) ? pc - ((offset ^ 0xFFFFFFFF) + 1) : pc + offset;
-}
+// //utilitiy
+// //input: offset of jump/branch and pc
+// //output: lbl_addrs the pc should jump to
+// inline int get_label_adress(unsigned int offset, int pc)
+// {
+//     //handles the case where lbl_addrs is negative
+//     return (offset >> 31) ? pc - ((offset ^ 0xFFFFFFFF) + 1) : pc + offset;
+// }
 
 void RV32I::print_instruction(int pc)
 {
@@ -141,9 +141,9 @@ void RV32I::print_instruction(int pc)
         std::cout << "\t" << I_instructions[funct3_] << "\t" << rd_ << ", " << rs1_ << ", " << std::hex << "0x" << (int)I_imm_ << "\n";
         break;
     case B_TYPE: //B-Type
-        lbl_addrs = get_label_adress(B_imm_, pc);
+        lbl_addrs = get_label_address(B_imm_, pc);
         generate_label(lbl_addrs);
-        std::cout << "\t" << B_instructions[funct3_] << "\t" << rs1_ << ", " << rs2_ << ", " << std::hex << "0x" << (int)B_imm_ << "<" << lbl_map_[lbl_addrs] << ">\n";
+        std::cout << "\t" << B_instructions[funct3_] << "\t" << rs1_ << ", " << rs2_ << ", " << std::hex << "0x" << (int)lbl_addrs << "<" << lbl_map_[lbl_addrs] << ">\n";
         break;
     case S_TYPE:
         std::cout << "\t" << S_instructions[funct3_] << "\t" << rs2_ << ", " << S_imm_ << "(" << rs1_ << ")\n";
@@ -155,14 +155,14 @@ void RV32I::print_instruction(int pc)
         std::cout << "\tAUIPC\t" << rd_ << ", " << std::hex << "0x" << (int)U_imm << "\n";
         break;
     case JAL:
-        lbl_addrs = get_label_adress(J_imm_, pc);
+        lbl_addrs = get_label_address(J_imm_, pc);
         generate_label(lbl_addrs);
-        std::cout << "\tJAL\t" << rd_ << ", " << std::hex << "0x" << (int)J_imm_ << "<" << lbl_map_[lbl_addrs] << ">\n";
+        std::cout << "\tJAL\t" << rd_ << ", " << std::hex << "0x" << lbl_addrs << "<" << lbl_map_[lbl_addrs] << ">\n";
         break;
     case JALR:
-        lbl_addrs = get_label_adress(I_imm_, pc);
+        lbl_addrs = get_label_address(I_imm_, pc);
         generate_label(lbl_addrs);
-        std::cout << "\tJALR\t" << rd_ << ", " << rs1_ << ", " << std::hex << "0x" << (int)I_imm_ << "<" << lbl_map_[lbl_addrs] << ">\n";
+        std::cout << "\tJALR\t" << rd_ << ", " << rs1_ << ", " << std::hex << "0x" << lbl_addrs << "<" << lbl_map_[lbl_addrs] << ">\n";
         break;
     case SYS_CALL:
         if (!I_imm_) //if last 12 bits == 0

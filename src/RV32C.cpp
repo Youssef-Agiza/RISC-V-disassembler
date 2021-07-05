@@ -121,19 +121,19 @@ bool RV32C::validate()
         unknown_inst = (funct3_ != 0 && funct3_ != 3 && funct3_ != 4);
 
         if (funct3_ == 0 && invalid_addi) //C.ADDI
-            invalid_inst = "C.ADDI\n";
+            invalid_inst = "C.ADDI";
 
         if (funct3_ == 3 && invalid_lui) //C.LUI
-            invalid_inst = "C.LUI\n";
+            invalid_inst = "C.LUI";
 
         if (funct3_ == 4) //SRLI & SRAI
         {
 
             if (funct6_ & 0x3 == 0 && invalid_shift)
-                invalid_inst = "C.SRLI\n";
+                invalid_inst = "C.SRLI";
 
             if (funct6_ & 0x3 == 1 && invalid_shift)
-                invalid_inst = "C.SRAI\n";
+                invalid_inst = "C.SRAI";
         }
     }
 
@@ -143,14 +143,11 @@ bool RV32C::validate()
         unknown_inst = (funct3_ != 0 && funct3_ != 4);
 
         if (funct3_ == 0 && invalid_shift)
-            invalid_inst = "C.SRLI\n";
+            invalid_inst = "C.SRLI";
     }
 
     if (unknown_inst)
-    {
         std::cout << "Unknwon RVC instruction: opcode = 0x" << std::hex << opcode_ << ".\n";
-        exit(1);
-    }
 
     if (!invalid_inst.empty())
         std::cout << "Invalid instruction input for " << invalid_inst << ".\n";
@@ -193,7 +190,7 @@ void RV32C::print_instruction(int pc)
             std::cout << "\tC.LUI\t" << rs1_ << ", 0x" << imm_ << "\n";
             break;
         case 4:
-            //funct6_ &0x3 --> instW[10:11]
+            //funct6_ &0x3 --> instW[1clea0:11]
             if (funct6_ & 0x3 == 3) //C.AND, C.OR, C.XOR, C.SUB
                 std::cout << "\t" << CA_instructions[funct2_] << "\t" << rs1_ << ", " << rs2_ << "\n";
             else //C.SRLI, C.SRAI, C.ANDI

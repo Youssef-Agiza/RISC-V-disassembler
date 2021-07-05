@@ -133,8 +133,11 @@ void RV32I::print_instruction(int pc)
         std::cout << "\t" << R_instructions[(funct3_ | funct7_)] << "\t" << rd_ << ", " << rs1_ << ", " << rs2_ << "\n";
         break;
     case I_TYPE:
+
         if (funct3_ == 5)
             funct3_ = (funct3_ | funct7_);
+        if (I_instructions[funct3_] == "SRAI")
+            I_imm_ = I_imm_ & 0x0FF;
         std::cout << "\t" << I_instructions[funct3_] << "\t" << rd_ << ", " << rs1_ << ", " << std::hex << "0x" << (int)I_imm_ << "\n";
         break;
     case B_TYPE: //B-Type

@@ -36,7 +36,7 @@ Disassembly of section .text:
   58:	c016                	sw	t0,0(sp)
   5a:	4402                	lw	s0,0(sp)
   5c:	0111                	addi	sp,sp,4
-  5e:	0d200413          	li	s0,210
+  5e:	0d200413          	la	s0,210
   62:	00040983          	lb	s3,0(s0)
   66:	1171                	addi	sp,sp,-4
   68:	01310023          	sb	s3,0(sp)

@@ -1,6 +1,6 @@
 #include "../headers/disassembler.h"
 
-Disassembler::Disassembler() : decoder_(new RV32I()), pc_(0x4), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
+Disassembler::Disassembler() : decoder_(new RV32I()), pc_(0x0), memory_(new char[8 * 1024]) {} // only 8KB of memory located at address 0
 
 Disassembler::~Disassembler()
 {
